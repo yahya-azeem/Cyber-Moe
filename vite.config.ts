@@ -7,6 +7,7 @@ import autoprefixer from 'autoprefixer'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [svelte()],
+  base: '/Cyber-Moe/',
   css: {
     postcss: {
       plugins: [
