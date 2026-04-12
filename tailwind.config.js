@@ -1,6 +1,6 @@
-import type { Config } from 'tailwindcss'
 import tailwindAnimate from 'tailwindcss-animate'
 
+/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   theme: {
@@ -109,4 +109,4 @@ export default {
     },
   },
   plugins: [tailwindAnimate],
-} satisfies Config
+}
