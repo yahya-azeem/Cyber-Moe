@@ -1,6 +1,6 @@
-import tailwindAnimate from "tailwindcss-animate";
+import type { Config } from 'tailwindcss'
+import tailwindAnimate from 'tailwindcss-animate'
 
-/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{html,js,svelte,ts}'],
   theme: {
@@ -87,6 +87,10 @@ export default {
           from: { transform: "translateX(50px)", opacity: "0" },
           to: { transform: "translateX(0)", opacity: "1" },
         },
+        "slide-out-left": {
+          from: { transform: "translateX(0)", opacity: "1" },
+          to: { transform: "translateX(-50px)", opacity: "0" },
+        },
         "fade-in": {
           from: { opacity: "0" },
           to: { opacity: "1" },
@@ -99,9 +103,10 @@ export default {
         "slide-up": "slide-up 0.6s ease-out forwards",
         "slide-in-left": "slide-in-left 0.6s ease-out forwards",
         "slide-in-right": "slide-in-right 0.6s ease-out forwards",
+        "slide-out-left": "slide-out-left 0.6s ease-in forwards",
         "fade-in": "fade-in 0.5s ease-out forwards",
       },
     },
   },
   plugins: [tailwindAnimate],
-}
+} satisfies Config
