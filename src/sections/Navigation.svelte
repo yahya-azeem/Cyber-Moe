@@ -37,14 +37,15 @@
 
 <nav 
   class={cn(
-    "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+    "fixed top-0 left-0 right-0 z-50 transition-all duration-500 transform",
     isScrolled 
-      ? "bg-black/90 backdrop-blur-md border-b border-white/10 py-2" 
-      : "bg-transparent py-4"
+      ? "bg-black/90 backdrop-blur-md border-b border-white/10 py-1" 
+      : "bg-transparent py-3",
+    isNavHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
   )}
 >
   <div class="w-full px-6 lg:px-12">
-    <div class="flex items-center justify-between h-16 lg:h-24">
+    <div class="flex items-center justify-between h-14 lg:h-18">
       <!-- Logo -->
       <a 
         href="/" 
@@ -55,7 +56,7 @@
           <img 
             src="logo.png" 
             alt="CyberMoe" 
-            class="h-12 lg:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
+            class="h-8 lg:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
           />
           <!-- Subtle glow to make it more visible -->
           <div class="absolute inset-0 bg-accent/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

@@ -214,9 +214,9 @@
     <footer class="mt-32 pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
       <div class="flex items-center gap-4">
         <img 
-          src="/logo.png" 
+          src="logo.png" 
           alt="CyberMoe" 
-          class="h-10 lg:h-12 w-auto object-contain brightness-110 drop-shadow-[0_0_10px_rgba(255,45,143,0.3)]"
+          class="h-7 lg:h-8 w-auto object-contain brightness-110 drop-shadow-[0_0_10px_rgba(255,45,143,0.3)]"
         />
         <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
         <p class="text-white/20 text-xs font-mono uppercase tracking-widest px-2">
