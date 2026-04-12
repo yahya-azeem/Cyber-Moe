@@ -125,7 +125,7 @@
     class="absolute inset-0 w-full h-full"
   >
     <img 
-      src="/hero_city.jpg" 
+      src="hero_city.jpg" 
       alt="Cyberpunk city" 
       class="w-full h-full object-cover"
     />

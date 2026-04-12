@@ -53,7 +53,7 @@
       >
         <div class="relative">
           <img 
-            src="/logo.png" 
+            src="logo.png" 
             alt="CyberMoe" 
             class="h-12 lg:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
           />

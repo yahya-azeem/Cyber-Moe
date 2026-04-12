@@ -122,7 +122,7 @@
     class="absolute inset-0 w-full h-full"
   >
     <img 
-      src="/services_city.jpg" 
+      src="services_city.jpg" 
       alt="City skyline" 
       class="w-full h-full object-cover"
     />

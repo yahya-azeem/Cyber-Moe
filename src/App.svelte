@@ -84,7 +84,7 @@
       description="From first firewall to incident response—practical protection designed for small teams. We prioritize what actually reduces risk, so you don't waste budget on theater."
       cta="Get a security review"
       caption="Penetration testing • Cloud hardening • Policy design"
-      image="/sec_analyst.jpg"
+      image="sec_analyst.jpg"
       layout="left"
     />
     
@@ -95,7 +95,7 @@
       description="Sanctions, supply chains, and data sovereignty aren't just headlines—they're operational risks. We translate global events into clear priorities for your business."
       cta="Talk to CyberMoe"
       caption="Risk mapping • Vendor due diligence • Scenario planning"
-      image="/globe_meeting.jpg"
+      image="globe_meeting.jpg"
       layout="right"
     />
     
@@ -106,7 +106,7 @@
       description="Ongoing security leadership without the full-time hire. A predictable monthly engagement that scales as your team and compliance needs evolve."
       cta="View plans"
       caption="Monthly advisory • Roadmaps • Board updates"
-      image="/vciso_laptop.jpg"
+      image="vciso_laptop.jpg"
       layout="left"
     />
     

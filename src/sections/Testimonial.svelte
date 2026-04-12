@@ -119,7 +119,7 @@
       <div bind:this={imageRef} class="relative">
         <div class="relative aspect-[4/5] max-h-[65vh] border border-white/10 overflow-hidden rounded-sm group/img shadow-2xl">
           <img 
-            src="/team_collab.jpg" 
+            src="team_collab.jpg" 
             alt="Team collaboration"
             class="w-full h-full object-cover transition-transform duration-1000 group-hover/img:scale-105"
           />
