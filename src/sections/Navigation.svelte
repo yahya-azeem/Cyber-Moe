@@ -5,10 +5,25 @@
 
   let isScrolled = $state(false);
   let isMobileMenuOpen = $state(false);
+  let isNavHidden = $state(false);
+  let lastScrollY = $state(0);
 
   onMount(() => {
     const handleScroll = () => {
-      isScrolled = window.scrollY > 100;
+      const currentScrollY = window.scrollY;
+      isScrolled = currentScrollY > 50;
+      
+      if (currentScrollY > window.innerHeight * 0.8) {
+        if (currentScrollY > lastScrollY && !isMobileMenuOpen) {
+          isNavHidden = true;
+        } else {
+          isNavHidden = false;
+        }
+      } else {
+        isNavHidden = false;
+      }
+      
+      lastScrollY = currentScrollY;
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
