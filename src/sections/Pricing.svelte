@@ -168,11 +168,16 @@
           </span>
 
           <!-- Price -->
-          <div class="flex items-baseline gap-2 mb-6">
-            <span class="font-display font-bold text-5xl lg:text-6xl text-white tracking-tighter">
-              {tier.price}
-            </span>
-            <span class="text-white/30 text-base font-light font-mono">{tier.period}</span>
+          <div class="space-y-1 mb-6">
+            <div class="text-accent text-[10px] font-mono uppercase tracking-[0.2em] font-bold">
+              First Month Free
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span class="font-display font-bold text-5xl lg:text-6xl text-white tracking-tighter">
+                {tier.price}
+              </span>
+              <span class="text-white/30 text-base font-light font-mono">{tier.period}</span>
+            </div>
           </div>
 
           <!-- Description -->
@@ -217,7 +222,7 @@
         Standard Assurance Protocol
       </p>
       <p class="text-white/40 text-sm max-w-xl mx-auto leading-relaxed italic">
-        "All engagements include a 14-day satisfaction guarantee. We prioritize operational continuity and zero-friction integration."
+        "Try any plan free for the first month. No commitment required—continue only if you're satisfied with our security operations."
       </p>
     </div>
   </div>
