@@ -21,4 +21,6 @@
 - [x] Remove drag-rotation camera code and clean HUD text labels from HTML
 - [x] Check GitHub Actions build pipeline logs and diagnose deployment status
 - [x] Implement Japanese Katakana Matrix Rain background canvas overlay in Bio tab (z-0 layer)
+- [x] Rewrite water shader to use Ajarus refractive and reflective pool math
+- [x] Implement interactive raycast click and touch start ripple generator (concentric damped sine ripples)
 - [x] Verify everything compiles and builds successfully using Nix

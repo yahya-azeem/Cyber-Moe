@@ -60,7 +60,7 @@
   let mouseX = 0;
   let mouseY = 0;
 
-  // Raycaster for card-level scroll hovering
+  // Raycaster for card-level scroll hovering and ripple injection
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let hoveredCardName = $state('');
@@ -84,6 +84,9 @@
     achievements: { x: 0.001,  z: -0.0012 },
     experience:   { x: -0.0008, z: 0.0008 }
   };
+
+  // Ripple simulation queue
+  let activeRipples: { x: number; y: number; time: number }[] = [];
 
   onMount(() => {
     // 1. Fetch & Parse LaTeX Resume in background IIFE
@@ -129,11 +132,59 @@
 
   // Wave slope calculator to tilt the cards
   function getWaveSlope(x: number, z: number, t: number) {
-    // Partial derivative df/dx
     const dfdx = 0.15 * 0.8 * Math.cos(0.8 * x + 1.5 * t);
-    // Partial derivative df/dz
     const dfdz = -0.15 * 0.8 * Math.sin(0.8 * z + 1.2 * t);
     return { dfdx, dfdz };
+  }
+
+  // Inject a ripple on click/touch
+  function addRipple(lx: number, ly: number) {
+    const now = Date.now() * 0.001;
+    activeRipples.push({ x: lx, y: ly, time: now });
+
+    // Keep only latest 8 ripples
+    if (activeRipples.length > 8) {
+      activeRipples.shift();
+    }
+
+    if (waterMaterial) {
+      const rippleVectors = Array.from({ length: 8 }, (_, i) => {
+        if (i < activeRipples.length) {
+          return new THREE.Vector3(activeRipples[i].x, activeRipples[i].y, activeRipples[i].time);
+        }
+        return new THREE.Vector3(0, 0, -999);
+      });
+      waterMaterial.uniforms.ripples.value = rippleVectors;
+      waterMaterial.uniforms.activeRipplesCount.value = activeRipples.length;
+    }
+  }
+
+  // Handles clicking on the water to spawn a splash ripple
+  function handleWaterClick(clientX: number, clientY: number) {
+    if (!renderer || !camera || !waterMesh) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    
+    mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(waterMesh);
+
+    if (intersects.length > 0) {
+      const hit = intersects[0];
+      const localPt = waterMesh.worldToLocal(hit.point.clone());
+      addRipple(localPt.x, localPt.y);
+    }
+  }
+
+  function handleMouseDown(e: MouseEvent) {
+    handleWaterClick(e.clientX, e.clientY);
+  }
+
+  function handleTouchStart(e: TouchEvent) {
+    if (e.touches.length > 0) {
+      handleWaterClick(e.touches[0].clientX, e.touches[0].clientY);
+    }
   }
 
   // Draws resume text dynamically onto each card canvas context with enlarged fonts
@@ -545,7 +596,6 @@
         card.position.set(0, yPos, 0);
         card.rotation.set(0, 0, 0);
       } else {
-        // Position at default pool X and Z anchors (bobs and drifts in physics loop)
         card.position.set(anchor.x, -0.5, anchor.z);
         card.rotation.set(0, 0, 0);
       }
@@ -574,39 +624,35 @@
     threeContainer.appendChild(renderer.domElement);
 
     // 2. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xe0a92e, 1.6);
+    const dirLight = new THREE.DirectionalLight(0xe0a92e, 1.7);
     dirLight.position.set(5, 7, 5);
     scene.add(dirLight);
 
-    // 3. Load Cowboy Bebop Background image directly to scene.background
-    const bgLoader = new THREE.TextureLoader();
-    bgLoader.load(`${baseUrl}bebop_bg.jpg`, (bgTexture) => {
-      bgTexture.colorSpace = THREE.SRGBColorSpace;
-      if (scene) {
-        scene.background = bgTexture; // Replaces black void completely
-      }
-    });
-
-    // 4. Incorporate a Wavy Transparent Pool Surface plane shader
+    // 3. Setup water material custom Ajarus + Interactive Ripples shader
     waterMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        time: { value: 0 }
+        time: { value: 0 },
+        bebopTexture: { value: new THREE.Texture() },
+        ripples: { value: Array.from({ length: 8 }, () => new THREE.Vector3(0, 0, -999)) },
+        activeRipplesCount: { value: 0 }
       },
       vertexShader: `
         uniform float time;
         varying vec3 vPosition;
+        varying vec3 vLocalPosition;
         varying vec2 vUv;
         
         void main() {
           vUv = uv;
           vec3 pos = position;
+          vLocalPosition = position;
           
-          // Wave height equation deforming surface vertically
+          // Physical wave height deforming surface vertically
           float h1 = 0.15 * sin(0.8 * pos.x + 1.5 * time);
-          float h2 = 0.15 * cos(0.8 * pos.y + 1.2 * time); // pos.y is Z in local coords before rotation
+          float h2 = 0.15 * cos(0.8 * pos.y + 1.2 * time); // pos.y is Z in local coordinates before rotation
           pos.z += h1 + h2;
           
           vPosition = pos;
@@ -615,19 +661,101 @@
       `,
       fragmentShader: `
         uniform float time;
+        uniform sampler2D bebopTexture;
         varying vec3 vPosition;
+        varying vec3 vLocalPosition;
         varying vec2 vUv;
         
+        // Ripples tracking (x, y are local water coords, z is birthTime)
+        uniform vec3 ripples[8];
+        uniform int activeRipplesCount;
+
+        const float PI = 3.1415926535897932;
+
+        // Ajarus shader params
+        const float speed = 0.2;
+        const float speed_x = 0.3;
+        const float speed_y = 0.3;
+
+        const float emboss = 0.50;
+        const float intensity = 2.4;
+        const int steps = 8;
+        const float frequency = 6.0;
+        const int angle = 7;
+
+        const float delta = 60.0;
+        const float gain = 700.0;
+        const float reflectionCutOff = 0.012;
+        const float reflectionIntensity = 200000.0;
+
+        float col(vec2 coord, float timeVal)
+        {
+          float delta_theta = 2.0 * PI / float(angle);
+          float colVal = 0.0;
+          float theta = 0.0;
+          for (int i = 0; i < steps; i++)
+          {
+            vec2 adjc = coord;
+            theta = delta_theta * float(i);
+            adjc.x += cos(theta) * timeVal * speed + timeVal * speed_x;
+            adjc.y -= sin(theta) * timeVal * speed - timeVal * speed_y;
+            colVal = colVal + cos((adjc.x * cos(theta) - adjc.y * sin(theta)) * frequency) * intensity;
+          }
+          return cos(colVal);
+        }
+
         void main() {
-          float r1 = sin(vPosition.x * 2.5 + time * 1.5);
-          float r2 = cos(vPosition.y * 2.5 + time * 1.2);
-          float ripple = 0.5 + 0.5 * (r1 * r2);
+          float timeVal = time * 1.3;
+          vec2 p = vUv;
+          vec2 c1 = p;
+          vec2 c2 = p;
           
-          // Transparent deep water cyan
-          vec3 waterColor = vec3(0.06, 0.36, 0.44);
-          float spec = pow(ripple, 8.0) * 0.22;
+          // 1. Calculate Ajarus displacement
+          float cc1 = col(c1, timeVal);
+
+          c2.x += 1.0 / delta;
+          float dx = emboss * (cc1 - col(c2, timeVal)) / delta;
+
+          c2.x = p.x;
+          c2.y += 1.0 / delta;
+          float dy = emboss * (cc1 - col(c2, timeVal)) / delta;
+
+          // 2. Add interactive expanding ripples (analytical wave equation)
+          for (int i = 0; i < 8; i++) {
+            if (i >= activeRipplesCount) break;
+            vec3 ripple = ripples[i];
+            float age = time - ripple.z;
+            if (age < 0.0 || age > 4.5) continue;
+
+            float dist = distance(vLocalPosition.xy, ripple.xy);
+            float waveSpeed = 4.5;
+            float waveFront = waveSpeed * age;
+
+            if (dist < waveFront && dist > 0.0) {
+              float diff = dist - waveFront;
+              float wave = sin(8.0 * diff) * exp(-1.5 * age) * 0.35;
+              vec2 dir = (vLocalPosition.xy - ripple.xy) / dist;
+              
+              dx += dir.x * wave * 0.02;
+              dy += dir.y * wave * 0.02;
+            }
+          }
+
+          // Refract UV coordinates
+          c1.x += dx * 2.0;
+          c1.y = fract(c1.y + dy * 2.0);
+
+          float alpha = 1.0 + dot(dx, dy) * gain;
           
-          gl_FragColor = vec4(waterColor + vec3(spec), 0.38);
+          float ddx = dx - reflectionCutOff;
+          float ddy = dy - reflectionCutOff;
+          if (ddx > 0.0 && ddy > 0.0) {
+            alpha = pow(alpha, ddx * ddy * reflectionIntensity);
+          }
+          
+          // Sample refracted texture
+          vec4 colTex = texture2D(bebopTexture, c1) * alpha;
+          gl_FragColor = colTex;
         }
       `,
       transparent: true,
@@ -639,6 +767,19 @@
     waterMesh.rotation.x = -Math.PI / 2; // Flat horizontal plane
     waterMesh.position.y = -0.5;         // Pool surface height
     scene.add(waterMesh);
+
+    // 4. Load Cowboy Bebop Background image and assign to scene & water
+    const bgLoader = new THREE.TextureLoader();
+    bgLoader.load(`${baseUrl}bebop_bg.jpg`, (bgTexture) => {
+      bgTexture.colorSpace = THREE.SRGBColorSpace;
+      bgTexture.wrapS = THREE.ClampToEdgeWrapping;
+      bgTexture.wrapT = THREE.ClampToEdgeWrapping;
+      
+      if (scene) scene.background = bgTexture;
+      if (waterMaterial) {
+        waterMaterial.uniforms.bebopTexture.value = bgTexture;
+      }
+    });
 
     // 5. Generate all 6 cards
     const cardNames: ('profile' | 'skills' | 'education' | 'projects' | 'achievements' | 'experience')[] = [
@@ -853,6 +994,8 @@
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div 
       bind:this={threeContainer} 
+      onmousedown={handleMouseDown}
+      ontouchstart={handleTouchStart}
       onwheel={handleWheel}
       class="w-full h-full"
       role="region"
