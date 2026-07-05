@@ -1,142 +1,59 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { Menu, X } from 'lucide-svelte';
   import { cn } from '$lib/utils';
 
-  let isScrolled = $state(false);
-  let isMobileMenuOpen = $state(false);
-  let isNavHidden = $state(false);
-  let lastScrollY = $state(0);
+  interface Props {
+    activeTab: 'bio' | 'resume' | 'services' | 'contact';
+    onTabChange: (tab: 'bio' | 'resume' | 'services' | 'contact') => void;
+  }
 
-  onMount(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      isScrolled = currentScrollY > 50;
-      
-      if (currentScrollY > window.innerHeight * 0.8) {
-        if (currentScrollY > lastScrollY && !isMobileMenuOpen) {
-          isNavHidden = true;
-        } else {
-          isNavHidden = false;
-        }
-      } else {
-        isNavHidden = false;
-      }
-      
-      lastScrollY = currentScrollY;
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  });
+  let { activeTab, onTabChange }: Props = $props();
 
-  const navLinks = [
-    { label: 'Services', href: '#services' },
-    { label: 'Capabilities', href: '#capabilities' },
-    { label: 'Subscription', href: '#pricing' },
-    { label: 'Process', href: '#process' },
-    { label: 'Contact', href: '#contact' },
+  const navLinks: { label: string; tab: 'bio' | 'resume' | 'services' | 'contact' }[] = [
+    { label: 'Bio', tab: 'bio' },
+    { label: 'Capabilities', tab: 'resume' },
+    { label: 'Services', tab: 'services' },
+    { label: 'Contact', tab: 'contact' },
   ];
 
-  const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-    isMobileMenuOpen = false;
-  };
-
-  const scrollToTop = (e: MouseEvent) => {
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const baseUrl = import.meta.env.BASE_URL || '/';
 </script>
 
-<nav 
-  class={cn(
-    "fixed top-0 left-0 right-0 z-50 transition-all duration-500 transform",
-    isScrolled 
-      ? "bg-black/90 backdrop-blur-md border-b border-white/10 py-1" 
-      : "bg-transparent py-3",
-    isNavHidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"
-  )}
->
-  <div class="w-full px-6 lg:px-12">
-    <div class="flex items-center justify-between h-14 lg:h-18">
-      <!-- Logo -->
-      <a 
-        href="/" 
-        onclick={scrollToTop}
-        class="flex items-center gap-3 group"
-      >
-        <div class="relative">
-          <img 
-            src="logo.png" 
-            alt="CyberMoe" 
-            class="h-8 lg:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-          />
-          <!-- Subtle glow to make it more visible -->
-          <div class="absolute inset-0 bg-accent/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        </div>
-      </a>
+<nav class="fixed top-0 left-0 right-0 z-50 bg-[#0b0c10] border-b-2 border-[#3d3428] py-2">
+  <div class="max-w-[1200px] mx-auto px-6 flex justify-between items-center h-14">
+    <!-- Logo -->
+    <button 
+      onclick={() => onTabChange('bio')}
+      class="flex items-center gap-3 text-left focus:outline-none"
+    >
+      <img 
+        src={`${baseUrl}logo.png`} 
+        alt="CyberMoe" 
+        class="h-6 lg:h-7 w-auto object-contain brightness-95 filter grayscale"
+        onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/logo.png'; }}
+      />
+      <span class="font-mono text-[10px] text-[#e0a92e] uppercase tracking-[0.25em] hidden md:inline">
+        // PORTFOLIO TERMINAL
+      </span>
+    </button>
 
-      <!-- Desktop Navigation -->
-      <div class="hidden lg:flex items-center gap-10">
-        {#each navLinks as link}
-          <button
-            onclick={() => scrollToSection(link.href)}
-            class="text-sm text-white/70 hover:text-white transition-colors duration-300 font-mono uppercase tracking-widest relative group"
-          >
-            {link.label}
-            <span class="absolute -bottom-1 left-0 w-0 h-px bg-accent transition-all duration-300 group-hover:w-full"></span>
-          </button>
-        {/each}
-      </div>
-
-      <!-- CTA Button -->
-      <div class="hidden lg:block">
-        <button 
-          onclick={() => scrollToSection('#contact')}
-          class="btn-primary text-sm tracking-wider uppercase font-mono"
+    <!-- Navigation Tabs -->
+    <div class="flex items-center gap-1 sm:gap-2 font-mono text-xs">
+      {#each navLinks as link}
+        <button
+          onclick={() => onTabChange(link.tab)}
+          class={cn(
+            "px-2.5 sm:px-4 py-1.5 uppercase tracking-wider transition-all duration-150 border-2 font-semibold",
+            activeTab === link.tab
+              ? "bg-[#e0a92e] text-[#0b0c10] border-[#e0a92e]"
+              : "border-transparent text-white/50 hover:text-white/80"
+          )}
         >
-          Book a free call
+          {link.label}
         </button>
-      </div>
-
-      <!-- Mobile Menu Button -->
-      <button
-        onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
-        class="lg:hidden p-2 text-white hover:text-accent transition-colors duration-300"
-        aria-label="Toggle menu"
-      >
-        {#if isMobileMenuOpen}
-          <X size={28} />
-        {:else}
-          <Menu size={28} />
-        {/if}
-      </button>
+      {/each}
     </div>
   </div>
 </nav>
 
-<!-- Mobile Menu -->
-<div 
-  class={cn(
-    "fixed inset-0 z-40 bg-black/98 backdrop-blur-2xl transition-all duration-500 lg:hidden flex flex-col items-center justify-center gap-10",
-    isMobileMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
-  )}
->
-  {#each navLinks as link}
-    <button
-      onclick={() => scrollToSection(link.href)}
-      class="text-3xl text-white/80 hover:text-accent transition-all duration-300 font-display font-bold tracking-tight"
-    >
-      {link.label}
-    </button>
-  {/each}
-  <button 
-    onclick={() => scrollToSection('#contact')}
-    class="btn-primary mt-6 text-lg px-10 py-4 shadow-glow animate-pulse-glow"
-  >
-    Book a free call
-  </button>
-</div>
+<!-- Spacer to prevent content from going under the fixed nav -->
+<div class="h-16"></div>
