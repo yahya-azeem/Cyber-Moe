@@ -28,4 +28,9 @@
 - [x] Set postCamera frustum clipping plane to -1 to 1 to prevent mesh clipping
 - [x] Create public/linkedin_posts.json to store dynamic social post data
 - [x] Refactor Bio.svelte to fetch and display LinkedIn posts dynamically on mount
+- [x] Set up zero-dependency scripts/fetch_linkedin.js Node.js sync script
+- [x] Configure .github/workflows/linkedin_sync.yml daily cron sync action
+- [x] Project fullscreen quad directly in clip coordinates in vertexShader
+- [x] Remove dynamic break uniforms to make shader loops fully static
+- [x] Amplify wave heights (0.018) and add glowing blue specular sheen highlights
 - [x] Verify everything compiles and builds successfully using Nix

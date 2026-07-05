@@ -137,7 +137,6 @@
         return new THREE.Vector3(0, 0, -999);
       });
       waterMaterial.uniforms.ripples.value = rippleVectors;
-      waterMaterial.uniforms.activeRipplesCount.value = activeRipples.length;
     }
   }
 
@@ -667,14 +666,13 @@
         time: { value: 0 },
         aspect: { value: aspect },
         bebopTexture: { value: renderTarget.texture },
-        ripples: { value: Array.from({ length: 8 }, () => new THREE.Vector3(0, 0, -999)) },
-        activeRipplesCount: { value: 0 }
+        ripples: { value: Array.from({ length: 8 }, () => new THREE.Vector3(0, 0, -999)) }
       },
       vertexShader: `
         varying vec2 vUv;
         void main() {
           vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_Position = vec4(position, 1.0);
         }
       `,
       fragmentShader: `
@@ -684,23 +682,22 @@
         varying vec2 vUv;
         
         uniform vec3 ripples[8];
-        uniform int activeRipplesCount;
 
         void main() {
           vec2 uv = vUv;
           float timeVal = time * 1.5;
           
-          // Calculate three sets of shifting sine waves for organic fluid overlay
-          float wave1 = sin(uv.x * 24.0 + timeVal) * 0.008;
-          float wave2 = cos(uv.y * 24.0 + timeVal * 1.1) * 0.008;
-          float wave3 = sin((uv.x + uv.y) * 16.0 - timeVal * 1.3) * 0.005;
+          // Amplified overlapping wave heights for high-visibility fluid movement
+          float wave1 = sin(uv.x * 18.0 + timeVal) * 0.018;
+          float wave2 = cos(uv.y * 18.0 + timeVal * 1.2) * 0.018;
+          float wave3 = sin((uv.x + uv.y) * 12.0 - timeVal * 1.4) * 0.012;
           
           vec2 offset = vec2(wave1 + wave3, wave2 + wave3);
           
-          // Add expanding concentric click/touch ripples (damped wave propagation)
+          // Concentric ripples from click / touch coordinates
           for (int i = 0; i < 8; i++) {
-            if (i >= activeRipplesCount) break;
             vec3 ripple = ripples[i];
+            if (ripple.z < -90.0) continue; // static skip of inactive elements
             float age = time - ripple.z;
             if (age < 0.0 || age > 4.0) continue;
 
@@ -714,18 +711,18 @@
             if (dist < waveFront && dist > 0.0) {
               float diff = dist - waveFront;
               // High frequency ripple rings
-              float wave = sin(34.0 * diff) * exp(-1.6 * age) * 0.1;
+              float wave = sin(32.0 * diff) * exp(-1.4 * age) * 0.12;
               vec2 dir = (uvAspect - rippleAspect) / dist;
-              offset += dir * wave * 0.35; // Amplified displacement for high-visibility ripples
+              offset += dir * wave * 0.45; // Amplified displacement
             }
           }
 
           // Sample refracted scene texture
-          vec4 colTex = texture2D(bebopTexture, fract(uv + offset));
+          vec4 colTex = texture2D(bebopTexture, uv + offset);
           
-          // Add water specular shimmer highlights
-          float specular = max(0.0, offset.x + offset.y) * 3.5;
-          colTex.rgb += vec3(specular * 0.15);
+          // Specular highlight: white/blue tint reflecting wave slopes
+          float sheen = abs(offset.x + offset.y) * 8.0;
+          colTex.rgb += vec3(sheen * 0.08, sheen * 0.11, sheen * 0.18);
           
           gl_FragColor = colTex;
         }
