@@ -20,5 +20,5 @@
 - [x] Implement real-time floaty drifting physics engine (bobbing, wave slope alignment, Brownian velocities, springs)
 - [x] Remove drag-rotation camera code and clean HUD text labels from HTML
 - [x] Check GitHub Actions build pipeline logs and diagnose deployment status
-- [x] Implement Japanese Katakana Matrix Rain foreground canvas overlay in Bio tab
+- [x] Implement Japanese Katakana Matrix Rain background canvas overlay in Bio tab (z-0 layer)
 - [x] Verify everything compiles and builds successfully using Nix

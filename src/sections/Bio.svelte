@@ -146,13 +146,13 @@
 </script>
 
 <div bind:this={containerRef} class="py-12 lg:py-20 max-w-[1200px] mx-auto px-6 relative z-10">
-  <!-- Matrix rain foreground overlay -->
+  <!-- Matrix rain background overlay -->
   <canvas 
     bind:this={matrixCanvas} 
-    class="absolute inset-0 w-full h-full pointer-events-none select-none z-20 opacity-20"
+    class="absolute inset-0 w-full h-full pointer-events-none select-none z-0 opacity-25"
   ></canvas>
   
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start relative z-10">
     
     <!-- Left Area - Resume Projects (Span 7) -->
     <div class="lg:col-span-7 space-y-8">
