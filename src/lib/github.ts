@@ -25,6 +25,27 @@ export interface GitHubEvent {
   created_at: string;
 }
 
+// Fetch details for specific pinned repos
+export async function fetchPinnedRepos(username: string = 'yahya-azeem'): Promise<GitHubRepo[]> {
+  const repoNames = ['ShadPS5', 'Project-Golf-Ball', 'polymarket-copy-bot-rust', 'Unixy-System', 'Protection-Valley'];
+  try {
+    const reposData = await Promise.all(
+      repoNames.map(async (name) => {
+        const res = await fetch(`https://api.github.com/repos/${username}/${name}`);
+        if (res.ok) {
+          const repo: GitHubRepo = await res.json();
+          return repo;
+        }
+        return null;
+      })
+    );
+    return reposData.filter((r): r is GitHubRepo => r !== null);
+  } catch (e) {
+    console.error('Failed to fetch pinned repos:', e);
+    return [];
+  }
+}
+
 // Fetch all repos sorted by pushed time
 export async function fetchActiveRepos(username: string = 'yahya-azeem'): Promise<GitHubRepo[]> {
   try {
