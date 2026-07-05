@@ -109,7 +109,7 @@
         <div class="w-8 h-0.5 bg-[#e0a92e]"></div>
         <span class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.4em]">Capabilities Matrix</span>
       </div>
-      <h2 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-white uppercase tracking-tight">
+      <h2 class="font-dots text-4xl sm:text-5xl lg:text-6xl text-white uppercase tracking-tight">
         Interactive <span class="text-[#e0a92e]">Resume</span>
       </h2>
     </div>
@@ -147,7 +147,7 @@
                 <img 
                   src={aboutMeImg} 
                   alt="Muhammad Yahya Azeem" 
-                  class="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-500 scale-100"
+                  class="w-full h-full object-cover scale-100"
                   onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/about_me.png'; }}
                 />
               </div>

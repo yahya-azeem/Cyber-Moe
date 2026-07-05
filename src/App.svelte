@@ -4,11 +4,10 @@
   import Bio from './sections/Bio.svelte';
   import Resume from './sections/Resume.svelte';
   import ServicesOverview from './sections/ServicesOverview.svelte';
-  import Contact from './sections/Contact.svelte';
 
-  let activeTab = $state<'bio' | 'resume' | 'services' | 'contact'>('bio');
+  let activeTab = $state<'bio' | 'resume' | 'services'>('bio');
 
-  function handleTabChange(newTab: 'bio' | 'resume' | 'services' | 'contact') {
+  function handleTabChange(newTab: 'bio' | 'resume' | 'services') {
     activeTab = newTab;
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
@@ -18,7 +17,7 @@
     const handleSwitchTab = (e: Event) => {
       const customEvent = e as CustomEvent;
       const targetTab = customEvent.detail;
-      if (targetTab === 'contact' || targetTab === 'resume' || targetTab === 'services' || targetTab === 'bio') {
+      if (targetTab === 'resume' || targetTab === 'services' || targetTab === 'bio') {
         handleTabChange(targetTab);
       }
     };
@@ -45,8 +44,6 @@
       <Resume />
     {:else if activeTab === 'services'}
       <ServicesOverview />
-    {:else if activeTab === 'contact'}
-      <Contact />
     {/if}
   </main>
 </div>

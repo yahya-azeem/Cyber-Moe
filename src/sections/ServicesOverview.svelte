@@ -50,7 +50,7 @@
       <div class="w-8 h-0.5 bg-[#e0a92e]"></div>
       <span class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.4em]">Operations payload // unified</span>
     </div>
-    <h2 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-white uppercase tracking-tight">
+    <h2 class="font-dots text-4xl sm:text-5xl lg:text-6xl text-white uppercase tracking-tight">
       Cybersecurity <span class="text-[#e0a92e]">Operations & Risk</span>
     </h2>
     <p class="text-white/60 text-sm sm:text-base max-w-2xl mt-4 font-light leading-relaxed">
@@ -90,20 +90,5 @@
     {/each}
   </div>
 
-  <!-- Call to action block -->
-  <div class="mt-16 bg-[#0f1115] border-2 border-[#a8201a] p-8 bebop-shadow-red flex flex-col md:flex-row justify-between items-center gap-6">
-    <div class="space-y-2 max-w-xl">
-      <h4 class="font-display font-bold text-xl uppercase tracking-tight">Flexible Scope & Startups First</h4>
-      <p class="text-white/60 text-sm font-light">
-        No corporate packages or boilerplate consulting tiers. We audit your stack, map out your vendor risks, and discuss a flexible fee structure once we know what your startup is building.
-      </p>
-    </div>
-    <button 
-      onclick={() => dispatch('contact')}
-      class="btn-bebop-red whitespace-nowrap"
-    >
-      Initiate Scope Chat
-      <ArrowRight class="inline ml-1" size={16} />
-    </button>
-  </div>
+
 </div>
