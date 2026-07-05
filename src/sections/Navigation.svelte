@@ -2,16 +2,15 @@
   import { cn } from '$lib/utils';
 
   interface Props {
-    activeTab: 'bio' | 'resume' | 'services';
-    onTabChange: (tab: 'bio' | 'resume' | 'services') => void;
+    activeTab: 'bio' | 'resume';
+    onTabChange: (tab: 'bio' | 'resume') => void;
   }
 
   let { activeTab, onTabChange }: Props = $props();
 
-  const navLinks: { label: string; tab: 'bio' | 'resume' | 'services' }[] = [
+  const navLinks: { label: string; tab: 'bio' | 'resume' }[] = [
     { label: 'Bio', tab: 'bio' },
     { label: 'Capabilities', tab: 'resume' },
-    { label: 'Services', tab: 'services' },
   ];
 
   const baseUrl = import.meta.env.BASE_URL || '/';
