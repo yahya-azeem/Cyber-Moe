@@ -1,19 +1,17 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { gsap } from 'gsap';
+  import * as THREE from 'three';
   import { 
     Terminal, 
     Cpu, 
     ShieldAlert, 
     Code, 
     ExternalLink, 
-    Award, 
     BookOpen, 
     Briefcase,
-    Calendar,
     MapPin,
-    Mail,
-    Phone
+    Mail
   } from 'lucide-svelte';
   import { parseResume, type ResumeData } from '../lib/resumeParser';
   import { cn } from '$lib/utils';
@@ -21,79 +19,476 @@
   let sectionRef = $state<HTMLElement>();
   let headerRef = $state<HTMLDivElement>();
   let summaryCardRef = $state<HTMLDivElement>();
+  let threeContainer = $state<HTMLDivElement>();
+  let canvas2D = $state<HTMLCanvasElement>();
 
   let resumeData = $state<ResumeData | null>(null);
   let isLoading = $state(true);
   let errorMsg = $state('');
   let activeTab = $state<'skills' | 'projects' | 'experience'>('skills');
 
+  let scrollY = $state(0);
+  let maxScroll = $state(0);
+
   const baseUrl = import.meta.env.BASE_URL || '/';
   const resumeUrl = `${baseUrl}resume.tex`;
   const aboutMeImg = `${baseUrl}about_me.png`;
 
-  onMount(async () => {
-    try {
-      const response = await fetch(resumeUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch resume from ${resumeUrl}`);
-      }
-      const texText = await response.text();
-      resumeData = parseResume(texText);
-      isLoading = false;
+  // Three.js instances
+  let renderer: THREE.WebGLRenderer | null = null;
+  let scene: THREE.Scene | null = null;
+  let camera: THREE.PerspectiveCamera | null = null;
+  let texture: THREE.CanvasTexture | null = null;
+  let cardGroup: THREE.Group | null = null;
+  let stars: THREE.Points | null = null;
+  let animId = 0;
 
-      // Initialize animations after DOM updates
-      setTimeout(setupAnimations, 100);
-    } catch (err: any) {
-      console.error(err);
-      errorMsg = err.message || 'Error loading resume';
-      isLoading = false;
-    }
+  // Parallax mouse position
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetRotX = 0;
+  let targetRotY = 0;
+  let isDragging = false;
+  let previousMouseX = 0;
+  let previousMouseY = 0;
+
+  onMount(() => {
+    // 1. Fetch & Parse LaTeX Resume in background IIFE
+    (async () => {
+      try {
+        const response = await fetch(resumeUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch resume from ${resumeUrl}`);
+        }
+        const texText = await response.text();
+        resumeData = parseResume(texText);
+        isLoading = false;
+
+        // 2. Initialize GSAP animations for profile elements
+        setTimeout(setupSummaryAnimations, 100);
+        
+        // 3. Initialize Three.js after Svelte has updated DOM
+        setTimeout(initThree, 150);
+      } catch (err: any) {
+        console.error(err);
+        errorMsg = err.message || 'Error loading resume';
+        isLoading = false;
+      }
+    })();
+
+    return () => {
+      // Cleanup Three.js loop and events
+      cancelAnimationFrame(animId);
+      window.removeEventListener('mousemove', handleMouseMoveGlobal);
+      window.removeEventListener('mouseup', handleMouseUpGlobal);
+      if (renderer) {
+        renderer.dispose();
+      }
+      if (texture) {
+        texture.dispose();
+      }
+      if (stars) {
+        stars.geometry.dispose();
+        (stars.material as THREE.Material).dispose();
+      }
+    };
   });
 
-  function setupAnimations() {
+  function setupSummaryAnimations() {
     if (!sectionRef) return;
-    
-    const ctx = gsap.context(() => {
-      // Fade in the header
+    gsap.context(() => {
       if (headerRef) {
-        gsap.fromTo(headerRef,
-          { y: 20, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.5,
-            ease: 'power2.out',
-          }
-        );
+        gsap.fromTo(headerRef, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' });
       }
-
-      // Summary Card and image
       if (summaryCardRef) {
-        gsap.fromTo(summaryCardRef,
-          { y: 20, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.5,
-            ease: 'power2.out',
-          }
-        );
+        gsap.fromTo(summaryCardRef, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' });
       }
     }, sectionRef);
-
-    return () => ctx.revert();
   }
 
-  // Trigger animations again when tab changes
+  // Draw resume text onto dynamic canvas texture
+  function drawResumeText(canvas: HTMLCanvasElement, tab: 'skills' | 'projects' | 'experience', data: ResumeData, scrollY: number): number {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return 0;
+
+    // Background color (Slate/Charcoal)
+    ctx.fillStyle = '#0f1115';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Bebop dual borders
+    ctx.strokeStyle = '#e0a92e';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(224, 169, 46, 0.4)';
+    ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+    // Low-fi scanline pattern
+    ctx.fillStyle = 'rgba(224, 169, 46, 0.03)';
+    for (let y2 = 25; y2 < canvas.height - 25; y2 += 4) {
+      ctx.fillRect(25, y2, canvas.width - 50, 2);
+    }
+
+    // Dynamic header (DotGothic16 pixel style)
+    ctx.fillStyle = '#e0a92e';
+    ctx.font = 'bold 36px Courier, monospace';
+    ctx.fillText(`// SYSTEM: ${tab.toUpperCase()} MATRIX`, 50, 80);
+
+    // Clip rendering window to keep text inside boundary
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(40, 110, canvas.width - 80, canvas.height - 150);
+    ctx.clip();
+
+    let y = 160 - scrollY;
+
+    if (tab === 'skills') {
+      const skillsCategories = [
+        { label: 'Programming Languages', items: data.skills.languages },
+        { label: 'Systems & Architecture', items: data.skills.systems },
+        { label: 'Deep Learning & Optimization', items: data.skills.deepLearning },
+        { label: 'Offensive Security', items: data.skills.offensiveSecurity }
+      ];
+
+      skillsCategories.forEach(cat => {
+        ctx.fillStyle = '#a8201a';
+        ctx.font = 'bold 26px Courier, monospace';
+        ctx.fillText(`> ${cat.label.toUpperCase()}`, 50, y);
+        y += 40;
+
+        ctx.fillStyle = '#f3efe0';
+        ctx.font = '20px Courier, monospace';
+
+        const text = cat.items.join(', ');
+        const words = text.split(' ');
+        let line = '';
+        for (let n = 0; n < words.length; n++) {
+          let testLine = line + words[n] + ' ';
+          let metrics = ctx.measureText(testLine);
+          if (metrics.width > canvas.width - 140 && n > 0) {
+            ctx.fillText(line, 80, y);
+            line = words[n] + ' ';
+            y += 32;
+          } else {
+            line = testLine;
+          }
+        }
+        ctx.fillText(line, 80, y);
+        y += 65;
+      });
+    } else if (tab === 'projects') {
+      data.projects.forEach(project => {
+        ctx.fillStyle = '#a8201a';
+        ctx.font = 'bold 26px Courier, monospace';
+        ctx.fillText(`[ ${project.title.toUpperCase()} ]`, 50, y);
+        
+        ctx.fillStyle = '#e0a92e';
+        ctx.font = 'italic 18px Courier, monospace';
+        ctx.fillText(`Tech: { ${project.tech} }`, 50, y + 26);
+        
+        ctx.fillStyle = 'rgba(243, 239, 224, 0.4)';
+        ctx.font = '16px Courier, monospace';
+        ctx.fillText(project.date, canvas.width - 240, y);
+        
+        y += 65;
+
+        ctx.fillStyle = '#f3efe0';
+        ctx.font = '18px Courier, monospace';
+        project.bullets.forEach(bullet => {
+          const words = bullet.split(' ');
+          let line = '  • ';
+          for (let n = 0; n < words.length; n++) {
+            let testLine = line + words[n] + ' ';
+            let metrics = ctx.measureText(testLine);
+            if (metrics.width > canvas.width - 140 && n > 0) {
+              ctx.fillText(line, 75, y);
+              line = '    ' + words[n] + ' ';
+              y += 28;
+            } else {
+              line = testLine;
+            }
+          }
+          ctx.fillText(line, 75, y);
+          y += 36;
+        });
+
+        y += 45;
+      });
+
+      // Additional repositories listing
+      if (data.otherProjects && data.otherProjects.length > 0) {
+        ctx.fillStyle = '#e0a92e';
+        ctx.font = 'bold 26px Courier, monospace';
+        ctx.fillText(`// ADDITIONAL CODE BASES`, 50, y);
+        y += 50;
+
+        data.otherProjects.forEach(other => {
+          ctx.fillStyle = '#f3efe0';
+          ctx.font = '20px Courier, monospace';
+          ctx.fillText(`• ${other.title}`, 60, y);
+          
+          ctx.fillStyle = 'rgba(224, 169, 46, 0.6)';
+          ctx.font = '16px Courier, monospace';
+          ctx.fillText(other.url, 85, y + 24);
+          
+          y += 55;
+        });
+      }
+    } else if (tab === 'experience') {
+      data.experience.forEach(job => {
+        ctx.fillStyle = '#a8201a';
+        ctx.font = 'bold 26px Courier, monospace';
+        ctx.fillText(`// ${job.role.toUpperCase()}`, 50, y);
+
+        ctx.fillStyle = '#e0a92e';
+        ctx.font = '18px Courier, monospace';
+        ctx.fillText(`${job.company}`, 50, y + 26);
+
+        ctx.fillStyle = 'rgba(243, 239, 224, 0.4)';
+        ctx.font = '16px Courier, monospace';
+        ctx.fillText(job.date, canvas.width - 240, y);
+
+        y += 65;
+
+        ctx.fillStyle = '#f3efe0';
+        ctx.font = '18px Courier, monospace';
+        job.bullets.forEach(bullet => {
+          const words = bullet.split(' ');
+          let line = '  • ';
+          for (let n = 0; n < words.length; n++) {
+            let testLine = line + words[n] + ' ';
+            let metrics = ctx.measureText(testLine);
+            if (metrics.width > canvas.width - 140 && n > 0) {
+              ctx.fillText(line, 75, y);
+              line = '    ' + words[n] + ' ';
+              y += 28;
+            } else {
+              line = testLine;
+            }
+          }
+          ctx.fillText(line, 75, y);
+          y += 36;
+        });
+
+        y += 45;
+      });
+    }
+
+    ctx.restore();
+    return y + scrollY; // Returns total drawn height
+  }
+
+  function updateCanvasTexture() {
+    if (!canvas2D || !resumeData) return;
+    const totalHeight = drawResumeText(canvas2D, activeTab, resumeData, scrollY);
+    
+    // Clamp height parameters
+    maxScroll = Math.max(0, totalHeight - (canvas2D.height - 120));
+    
+    if (texture) {
+      texture.needsUpdate = true;
+    }
+  }
+
+  // Initialize Three.js scene
+  function initThree() {
+    if (!threeContainer || !canvas2D) return;
+
+    const width = threeContainer.clientWidth;
+    const height = threeContainer.clientHeight;
+
+    // 1. Scene & Render
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050608, 0.08);
+
+    camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.z = 7.5;
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    threeContainer.appendChild(renderer.domElement);
+
+    // 2. Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xe0a92e, 1.5);
+    dirLight.position.set(5, 5, 5);
+    scene.add(dirLight);
+
+    // 3. Dynamic Canvas Texture
+    texture = new THREE.CanvasTexture(canvas2D);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    updateCanvasTexture();
+
+    // 4. CRT Card/Monitor Mesh Group
+    cardGroup = new THREE.Group();
+
+    // 4a. Front display screen
+    const screenGeom = new THREE.BoxGeometry(3.5, 3.5, 0.05);
+    const screenMatArray = [
+      new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // right
+      new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // left
+      new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // top
+      new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // bottom
+      new THREE.MeshBasicMaterial({ map: texture }),                       // front
+      new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 })  // back
+    ];
+    const screenMesh = new THREE.Mesh(screenGeom, screenMatArray);
+    cardGroup.add(screenMesh);
+
+    // 4b. Frame bezel
+    const bezelGeom = new THREE.BoxGeometry(3.7, 3.7, 0.1);
+    const bezelMat = new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.8, metalness: 0.2 });
+    const bezelMesh = new THREE.Mesh(bezelGeom, bezelMat);
+    bezelMesh.position.z = -0.06;
+    cardGroup.add(bezelMesh);
+
+    // 4c. Back CRT tube tapered box casing
+    const tubeGeom = new THREE.BoxGeometry(3.2, 3.2, 0.9);
+    const tubeMat = new THREE.MeshStandardMaterial({ color: 0x090b0e, roughness: 0.9, metalness: 0.1 });
+    const tubeMesh = new THREE.Mesh(tubeGeom, tubeMat);
+    tubeMesh.position.z = -0.52;
+    cardGroup.add(tubeMesh);
+
+    scene.add(cardGroup);
+
+    // 5. Star Particle void
+    const starsCount = 400;
+    const starsGeom = new THREE.BufferGeometry();
+    const starsPositions = new Float32Array(starsCount * 3);
+
+    for (let i = 0; i < starsCount * 3; i += 3) {
+      starsPositions[i] = (Math.random() - 0.5) * 20;     // X
+      starsPositions[i + 1] = (Math.random() - 0.5) * 20; // Y
+      starsPositions[i + 2] = (Math.random() - 0.5) * 20; // Z
+    }
+
+    starsGeom.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
+    const starsMat = new THREE.PointsMaterial({
+      color: 0xe0a92e,
+      size: 0.04,
+      transparent: true,
+      opacity: 0.7,
+      fog: true
+    });
+    stars = new THREE.Points(starsGeom, starsMat);
+    scene.add(stars);
+
+    // 6. Global Parallax & Resize listeners
+    window.addEventListener('mousemove', handleMouseMoveGlobal);
+    window.addEventListener('mouseup', handleMouseUpGlobal);
+
+    // 7. Kickoff loop
+    tick();
+  }
+
+  function tick() {
+    animId = requestAnimationFrame(tick);
+
+    if (renderer && scene && camera && cardGroup) {
+      const time = Date.now() * 0.001;
+
+      // Star rotation
+      if (stars) {
+        stars.rotation.y = time * 0.015;
+      }
+
+      // Parallax mouse damping
+      if (!isDragging) {
+        targetRotX = mouseY * 0.5;
+        targetRotY = mouseX * 0.5;
+        
+        // Floating hover motion added
+        targetRotX += Math.sin(time * 1.5) * 0.05;
+        targetRotY += Math.cos(time * 1.5) * 0.05;
+
+        cardGroup.rotation.x += (targetRotX - cardGroup.rotation.x) * 0.08;
+        cardGroup.rotation.y += (targetRotY - cardGroup.rotation.y) * 0.08;
+      }
+
+      renderer.render(scene, camera);
+    }
+  }
+
+  // Handle local dragging on monitor container
+  function handleMouseDown(e: MouseEvent) {
+    isDragging = true;
+    previousMouseX = e.clientX;
+    previousMouseY = e.clientY;
+  }
+
+  function handleMouseMoveGlobal(e: MouseEvent) {
+    // Record screen relative mouse coordinates for parallax
+    mouseX = (e.clientX / window.innerWidth) - 0.5;
+    mouseY = (e.clientY / window.innerHeight) - 0.5;
+
+    if (isDragging && cardGroup) {
+      const deltaX = e.clientX - previousMouseX;
+      const deltaY = e.clientY - previousMouseY;
+
+      cardGroup.rotation.y += deltaX * 0.01;
+      cardGroup.rotation.x += deltaY * 0.01;
+
+      previousMouseX = e.clientX;
+      previousMouseY = e.clientY;
+    }
+  }
+
+  function handleMouseUpGlobal() {
+    isDragging = false;
+  }
+
+  // Handle scroll wheel events to scroll canvas texture
+  function handleWheel(e: WheelEvent) {
+    e.preventDefault();
+    scrollY = Math.max(0, Math.min(maxScroll, scrollY + e.deltaY * 0.5));
+  }
+
+  // Snappy GSAP spin animation upon tab switches
+  function switchTab(newTab: 'skills' | 'projects' | 'experience') {
+    if (activeTab === newTab) return;
+    
+    activeTab = newTab;
+    scrollY = 0;
+
+    if (cardGroup) {
+      // Snappy 360 degree spin on Y-axis
+      gsap.to(cardGroup.rotation, {
+        y: cardGroup.rotation.y + Math.PI * 2,
+        duration: 0.65,
+        ease: 'back.out(1.15)',
+        onStart: () => {
+          // Mid-spin texture switch
+          setTimeout(() => {
+            updateCanvasTexture();
+          }, 200);
+        }
+      });
+    }
+  }
+
+  // React to scroll changes
   $effect(() => {
-    if (activeTab && !isLoading) {
-      gsap.fromTo('.tab-item-card',
-        { y: 15, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, ease: 'power2.out' }
-      );
+    if (resumeData && canvas2D) {
+      scrollY;
+      updateCanvasTexture();
     }
   });
+
+  // Handle window resizing
+  function handleResize() {
+    if (!threeContainer || !renderer || !camera) return;
+    const width = threeContainer.clientWidth;
+    const height = threeContainer.clientHeight;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  }
 </script>
+
+<svelte:window onresize={handleResize} />
 
 <section 
   bind:this={sectionRef}
@@ -287,13 +682,13 @@
           </div>
         </div>
 
-        <!-- Right Side: Interactive Panel (Span 7) -->
-        <div class="lg:col-span-7 space-y-8">
+        <!-- Right Side: Three.js Interactive CRT Console (Span 7) -->
+        <div class="lg:col-span-7 space-y-6">
           
           <!-- Terminal Tabs Navigation -->
           <div class="flex border-2 border-[#3d3428] bg-black p-1">
             <button 
-              onclick={() => activeTab = 'skills'}
+              onclick={() => switchTab('skills')}
               class={cn(
                 "flex-1 py-3 text-xs sm:text-sm font-mono uppercase tracking-widest transition-all flex items-center justify-center gap-2",
                 activeTab === 'skills' 
@@ -305,7 +700,7 @@
               Skills Matrix
             </button>
             <button 
-              onclick={() => activeTab = 'projects'}
+              onclick={() => switchTab('projects')}
               class={cn(
                 "flex-1 py-3 text-xs sm:text-sm font-mono uppercase tracking-widest transition-all flex items-center justify-center gap-2",
                 activeTab === 'projects' 
@@ -317,7 +712,7 @@
               Projects
             </button>
             <button 
-              onclick={() => activeTab = 'experience'}
+              onclick={() => switchTab('experience')}
               class={cn(
                 "flex-1 py-3 text-xs sm:text-sm font-mono uppercase tracking-widest transition-all flex items-center justify-center gap-2",
                 activeTab === 'experience' 
@@ -330,194 +725,38 @@
             </button>
           </div>
 
-          <!-- Tab Content Area -->
-          <div class="min-h-[500px]">
+          <!-- Three.js Canvas Container Box -->
+          <div class="relative w-full h-[600px] bg-black border-2 border-[#3d3428] overflow-hidden group select-none">
+            <!-- Three.js Canvas Container -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <div 
+              bind:this={threeContainer} 
+              onmousedown={handleMouseDown}
+              onwheel={handleWheel} 
+              class="w-full h-full cursor-grab active:cursor-grabbing"
+              role="region"
+              aria-label="3D CRT Screen Controls"
+            ></div>
+
+            <!-- Offscreen 2D Canvas used for texture mapping -->
+            <canvas 
+              bind:this={canvas2D} 
+              width="1024" 
+              height="1024" 
+              class="hidden"
+            ></canvas>
+
+            <!-- Retro CRT Terminal overlay decals -->
+            <div class="absolute bottom-4 left-4 bg-black/60 border border-[#e0a92e]/40 px-3 py-1 font-mono text-[9px] text-[#e0a92e] uppercase tracking-wider pointer-events-none select-none">
+              SYS STATUS: ACTIVE // SCROLL TO SCAN // DRAG TO ROTATE
+            </div>
             
-            {#if activeTab === 'skills'}
-              <!-- Skills Panel -->
-              <div class="space-y-6 tab-content-animate">
-                
-                <!-- Programming Languages -->
-                <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 tab-item-card transition-all duration-300 hover:border-[#e0a92e] group">
-                  <div class="flex items-center justify-between mb-4">
-                    <h4 class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Terminal size={14} />
-                      Languages
-                    </h4>
-                  </div>
-                  <div class="flex flex-wrap gap-2.5">
-                    {#each resumeData.skills.languages as lang}
-                      <span class="px-3 py-1.5 bg-[#0b0c10] border border-[#3d3428] rounded text-sm text-white/80 transition-colors font-mono">
-                        {lang}
-                      </span>
-                    {/each}
-                  </div>
-                </div>
-
-                <!-- Systems & Architecture -->
-                <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 tab-item-card transition-all duration-300 hover:border-[#e0a92e] group">
-                  <div class="flex items-center justify-between mb-4">
-                    <h4 class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Cpu size={14} />
-                      Systems & Architecture
-                    </h4>
-                  </div>
-                  <div class="flex flex-wrap gap-2.5">
-                    {#each resumeData.skills.systems as sys}
-                      <span class="px-3 py-1.5 bg-[#0b0c10] border border-[#3d3428] rounded text-sm text-white/80 transition-colors font-mono">
-                        {sys}
-                      </span>
-                    {/each}
-                  </div>
-                </div>
-
-                <!-- Deep Learning & Optimization -->
-                <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 tab-item-card transition-all duration-300 hover:border-[#e0a92e] group">
-                  <div class="flex items-center justify-between mb-4">
-                    <h4 class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Code size={14} />
-                      Deep Learning & Optimization
-                    </h4>
-                  </div>
-                  <div class="flex flex-wrap gap-2.5">
-                    {#each resumeData.skills.deepLearning as dl}
-                      <span class="px-3 py-1.5 bg-[#0b0c10] border border-[#3d3428] rounded text-sm text-white/80 transition-colors font-mono">
-                        {dl}
-                      </span>
-                    {/each}
-                  </div>
-                </div>
-
-                <!-- Offensive Security -->
-                <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 tab-item-card transition-all duration-300 hover:border-[#e0a92e] group">
-                  <div class="flex items-center justify-between mb-4">
-                    <h4 class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Award size={14} />
-                      Offensive Security
-                    </h4>
-                  </div>
-                  <div class="flex flex-wrap gap-2.5">
-                    {#each resumeData.skills.offensiveSecurity as os}
-                      <span class="px-3 py-1.5 bg-[#0b0c10] border border-[#3d3428] rounded text-sm text-white/80 transition-colors font-mono">
-                        {os}
-                      </span>
-                    {/each}
-                  </div>
-                </div>
-
-              </div>
-            {/if}
-
-            {#if activeTab === 'projects'}
-              <!-- Projects Panel -->
-              <div class="space-y-6 tab-content-animate">
-                {#each resumeData.projects as project}
-                  <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 tab-item-card transition-all duration-300 hover:border-[#e0a92e] group relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-[#e0a92e]/20 group-hover:bg-[#e0a92e] transition-colors"></div>
-                    
-                    <div class="flex justify-between items-start gap-4 mb-3 pl-2">
-                      <div>
-                        <h4 class="font-display font-bold text-xl text-white group-hover:text-[#e0a92e] transition-colors flex items-center gap-2 uppercase tracking-tight">
-                          {project.title}
-                        </h4>
-                        <span class="font-mono text-[10px] text-white/40 uppercase tracking-widest mt-1 block">
-                          Key Tech: {project.tech}
-                        </span>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <span class="text-[#e0a92e] text-xs font-mono hidden sm:inline">{project.date}</span>
-                        <a 
-                          href={project.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label="GitHub Repository"
-                          class="w-8 h-8 bg-black border border-[#3d3428] hover:border-[#e0a92e] hover:bg-[#0f1115] flex items-center justify-center text-white/50 hover:text-white transition-all"
-                        >
-                          <svg class="w-3.5 h-3.5 fill-current text-white/50 hover:text-white" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        </a>
-                      </div>
-                    </div>
-
-                    <ul class="space-y-3 pl-2 mt-4 text-[#f3efe0]/70 text-sm font-light leading-relaxed">
-                      {#each project.bullets as bullet}
-                        <li class="flex items-start gap-3">
-                          <span class="text-[#e0a92e] mt-2 w-1.5 h-1.5 bg-[#e0a92e] flex-shrink-0"></span>
-                          <span>{bullet}</span>
-                        </li>
-                      {/each}
-                    </ul>
-                  </div>
-                {/each}
-
-                <!-- Other Projects (Inline listing) -->
-                {#if resumeData.otherProjects && resumeData.otherProjects.length > 0}
-                  <div class="bg-[#0f1115]/40 border-2 border-[#3d3428] p-6 tab-item-card transition-all">
-                    <h4 class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.2em] mb-4 border-b border-[#3d3428] pb-2">
-                      Additional Repositories
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {#each resumeData.otherProjects as other}
-                        <a 
-                          href={other.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          class="flex items-center justify-between p-4 bg-black border border-[#3d3428] hover:border-[#e0a92e] group transition-all"
-                        >
-                          <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-[#e0a92e]/5 border border-[#3d3428] flex items-center justify-center group-hover:bg-[#e0a92e]/20 transition-colors">
-                              <Code size={14} class="text-[#e0a92e]" />
-                            </div>
-                            <span class="text-white/70 group-hover:text-white font-mono text-sm transition-colors">{other.title}</span>
-                          </div>
-                          <ExternalLink size={14} class="text-white/30 group-hover:text-white transition-colors" />
-                        </a>
-                      {/each}
-                    </div>
-                  </div>
-                {/if}
-
-              </div>
-            {/if}
-
-            {#if activeTab === 'experience'}
-              <!-- Experience Panel -->
-              <div class="space-y-6 tab-content-animate">
-                {#each resumeData.experience as exp}
-                  <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 tab-item-card transition-all duration-300 hover:border-[#e0a92e] group relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-[#e0a92e]/20 group-hover:bg-[#e0a92e] transition-colors"></div>
-                    
-                    <div class="flex justify-between items-start gap-4 mb-4 pl-2">
-                      <div>
-                        <h4 class="font-display font-bold text-xl text-white group-hover:text-[#e0a92e] transition-colors uppercase tracking-tight">
-                          {exp.role}
-                        </h4>
-                        <div class="flex flex-wrap items-center gap-2 mt-1 text-sm font-mono">
-                          <span class="text-[#e0a92e] font-semibold">{exp.company}</span>
-                          <span class="text-white/20">•</span>
-                          <span class="flex items-center gap-1 text-xs text-white/50">
-                            <Calendar size={12} />
-                            {exp.date}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <ul class="space-y-3 pl-2 mt-4 text-[#f3efe0]/70 text-sm font-light leading-relaxed">
-                      {#each exp.bullets as bullet}
-                        <li class="flex items-start gap-3">
-                          <span class="text-[#e0a92e] mt-2 w-1.5 h-1.5 bg-[#e0a92e] flex-shrink-0"></span>
-                          <span>{bullet}</span>
-                        </li>
-                      {/each}
-                    </ul>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-
+            <div class="absolute bottom-4 right-4 bg-black/60 border border-[#a8201a]/40 px-3 py-1 font-mono text-[9px] text-[#a8201a] uppercase tracking-wider pointer-events-none select-none">
+              CRT RENDER: 3D MONITOR MODE
+            </div>
           </div>
-        </div>
 
+        </div>
       </div>
     {/if}
   </div>
