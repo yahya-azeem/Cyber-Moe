@@ -734,6 +734,7 @@
     // 2D fullscreen quad in postScene
     const waterGeom = new THREE.PlaneGeometry(2, 2);
     waterMesh = new THREE.Mesh(waterGeom, waterMaterial);
+    waterMesh.frustumCulled = false;
     postScene.add(waterMesh);
 
     // 8. Global Mouse Move Listener

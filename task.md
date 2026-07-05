@@ -26,11 +26,7 @@
 - [x] Tune Ajarus shader parameters (frequency 45.0, emboss 0.055) for crisp, readable text and distinct water ripples
 - [x] Set depthTest: false and depthWrite: false on water material to prevent z-buffer clipping
 - [x] Set postCamera frustum clipping plane to -1 to 1 to prevent mesh clipping
-- [x] Create public/linkedin_posts.json to store dynamic social post data
-- [x] Refactor Bio.svelte to fetch and display LinkedIn posts dynamically on mount
-- [x] Set up zero-dependency scripts/fetch_linkedin.js Node.js sync script
-- [x] Configure .github/workflows/linkedin_sync.yml daily cron sync action
-- [x] Project fullscreen quad directly in clip coordinates in vertexShader
-- [x] Remove dynamic break uniforms to make shader loops fully static
-- [x] Amplify wave heights (0.018) and add glowing blue specular sheen highlights
+- [x] Set waterMesh.frustumCulled = false to prevent frustum culling on resize
+- [x] Add interactive Black Hole accretion disk raymarching shader at the bottom of Bio.svelte
+- [x] Replace dynamic posts query with a simple redirect button to LinkedIn posts activity feed
 - [x] Verify everything compiles and builds successfully using Nix
