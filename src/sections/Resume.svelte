@@ -41,7 +41,9 @@
   // Widescreen Background plane
   let bgMesh: THREE.Mesh | null = null;
 
-  // 2D Water overlay post-process
+  // 2D Fullscreen Water overlay post-process
+  let postScene: THREE.Scene | null = null;
+  let postCamera: THREE.OrthographicCamera | null = null;
   let waterMesh: THREE.Mesh | null = null;
   let waterMaterial: THREE.ShaderMaterial | null = null;
   let renderTarget: THREE.WebGLRenderTarget | null = null;
@@ -72,7 +74,7 @@
   const mouse = new THREE.Vector2();
   let hoveredCardName = $state('');
 
-  // Pinned Default Scattered Layouts (reverted to original layout)
+  // Pinned Default Scattered Layouts
   const defaultLayouts = {
     profile:      { x: -3.4, y: 1.5,  z: 0.15, rx: 0.05,  ry: 0.08,  rz: -0.04 },
     skills:       { x: -3.1, y: -1.3, z: -0.25, rx: -0.03, ry: -0.05, rz: 0.03 },
@@ -463,7 +465,7 @@
   function createCardMesh(name: string, tex: THREE.CanvasTexture): THREE.Group {
     const group = new THREE.Group();
 
-    // Custom CRT Screen Shader Material (curved glass warp, scanlines, aberration)
+    // Custom CRT Screen Shader Material
     const screenMat = new THREE.ShaderMaterial({
       uniforms: {
         screenTexture: { value: tex },
@@ -547,7 +549,7 @@
     return group;
   }
 
-  // Position cards in space dynamically (reverted to original layout)
+  // Position cards in space dynamically
   function positionCards() {
     if (!cardGroup || cardGroup.children.length < 6) return;
     const isMobile = window.innerWidth < 768;
@@ -581,6 +583,7 @@
 
     const width = threeContainer.clientWidth;
     const height = threeContainer.clientHeight;
+    const pixelRatio = window.devicePixelRatio || 1;
 
     // 1. Scene setup
     scene = new THREE.Scene();
@@ -591,21 +594,32 @@
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(pixelRatio, 2));
     threeContainer.appendChild(renderer.domElement);
 
-    // 2. Setup WebGLRenderTarget for 2D water post-processing
-    renderTarget = new THREE.WebGLRenderTarget(width, height);
+    // 2. High-res WebGLRenderTarget without mipmap blurriness
+    const targetWidth = width * Math.min(pixelRatio, 2);
+    const targetHeight = height * Math.min(pixelRatio, 2);
+    renderTarget = new THREE.WebGLRenderTarget(targetWidth, targetHeight, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      generateMipmaps: false,
+      colorSpace: THREE.SRGBColorSpace
+    });
 
-    // 3. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    // 3. Post-processing scene and orthographic camera for pixel-perfect 2D overlay
+    postScene = new THREE.Scene();
+    postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    // 4. Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
     scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0xe0a92e, 1.7);
     dirLight.position.set(5, 5, 5);
     scene.add(dirLight);
 
-    // 4. Load Cowboy Bebop Background plane in scene background
+    // 5. Load Cowboy Bebop Background plane in scene background
     const bgLoader = new THREE.TextureLoader();
     bgLoader.load(`${baseUrl}bebop_bg.jpg`, (bgTexture) => {
       bgTexture.colorSpace = THREE.SRGBColorSpace;
@@ -617,7 +631,7 @@
       scene?.add(bgMesh);
     });
 
-    // 5. Generate all 6 cards floating at z = 0
+    // 6. Generate all 6 cards floating at z = 0
     const cardNames: ('profile' | 'skills' | 'education' | 'projects' | 'achievements' | 'experience')[] = [
       'profile', 'skills', 'education', 'projects', 'achievements', 'experience'
     ];
@@ -646,8 +660,7 @@
     scene.add(cardGroup);
     positionCards();
 
-    // 6. Setup Wavy transparent pool overlay directly in front of the camera (z = 1.5)
-    // Refracts both cards and Cowboy Bebop background image dynamically!
+    // 7. Setup Ajarus Water ShaderMaterial for the fullscreen 2D overlay
     const aspect = width / height;
     waterMaterial = new THREE.ShaderMaterial({
       uniforms: {
@@ -675,15 +688,15 @@
 
         const float PI = 3.1415926535897932;
 
-        // Ajarus shader params (emboss refraction and reflections)
-        const float speed = 0.15;
-        const float speed_x = 0.25;
-        const float speed_y = 0.25;
+        // Optimized Ajarus shader params for fine, sharp, legible 2D ripples
+        const float speed = 0.08;
+        const float speed_x = 0.06;
+        const float speed_y = 0.06;
 
-        const float emboss = 0.35;
-        const float intensity = 2.0;
-        const int steps = 8;
-        const float frequency = 6.0;
+        const float emboss = 0.055;        // Subtle displacement keeps text perfectly sharp
+        const float intensity = 1.6;
+        const int steps = 6;
+        const float frequency = 45.0;     // High frequency creates tight, crisp ripples
         const int angle = 7;
 
         const float delta = 60.0;
@@ -722,14 +735,13 @@
           c2.y += 1.0 / delta;
           float dy = emboss * (cc1 - col(c2, timeVal)) / delta;
 
-          // Add interactive concentric screen-space ripples
+          // Interactive ripples deforming refraction
           for (int i = 0; i < 8; i++) {
             if (i >= activeRipplesCount) break;
             vec3 ripple = ripples[i];
             float age = time - ripple.z;
             if (age < 0.0 || age > 4.5) continue;
 
-            // distance check scaled by monitor aspect to maintain circle shape
             vec2 uvAspect = vUv * vec2(aspect, 1.0);
             vec2 rippleAspect = ripple.xy * vec2(aspect, 1.0);
             float dist = distance(uvAspect, rippleAspect);
@@ -739,17 +751,17 @@
 
             if (dist < waveFront && dist > 0.0) {
               float diff = dist - waveFront;
-              // Damped sine wave
-              float wave = sin(22.0 * diff) * exp(-1.8 * age) * 0.14;
+              // High frequency expanding concentric wave
+              float wave = sin(38.0 * diff) * exp(-1.6 * age) * 0.12;
               vec2 dir = (uvAspect - rippleAspect) / dist;
               
-              dx += dir.x * wave * 0.04;
-              dy += dir.y * wave * 0.04;
+              dx += dir.x * wave * 0.08;
+              dy += dir.y * wave * 0.08;
             }
           }
 
-          c1.x += dx * 0.65;
-          c1.y = fract(c1.y + dy * 0.65);
+          c1.x += dx * 0.6;
+          c1.y = fract(c1.y + dy * 0.6);
 
           float alpha = 1.0 + dot(dx, dy) * gain;
           
@@ -765,13 +777,12 @@
       `
     });
 
-    // Make the overlay plane cover the camera viewport exactly
-    const waterGeom = new THREE.PlaneGeometry(aspect * 7.5, 7.5);
+    // 2D fullscreen quad in postScene
+    const waterGeom = new THREE.PlaneGeometry(2, 2);
     waterMesh = new THREE.Mesh(waterGeom, waterMaterial);
-    waterMesh.position.set(0, 0, 1.5);
-    scene.add(waterMesh);
+    postScene.add(waterMesh);
 
-    // 7. Global Mouse Move Listener
+    // 8. Global Mouse Move Listener
     window.addEventListener('mousemove', handleMouseMoveGlobal);
 
     tick();
@@ -780,7 +791,7 @@
   function tick() {
     animId = requestAnimationFrame(tick);
 
-    if (renderer && scene && camera && cardGroup && waterMesh && renderTarget) {
+    if (renderer && scene && camera && cardGroup && postScene && postCamera && renderTarget) {
       const time = Date.now() * 0.001;
 
       // Update shader times
@@ -829,19 +840,13 @@
         cardGroup.position.y = 0;
       }
 
-      // 1. Hide the water overlay plane before rendering scene to texture
-      waterMesh.visible = false;
-      
-      // 2. Render cards and background to RenderTarget
+      // 1. Render 3D cards and background plane to high-res render target
       renderer.setRenderTarget(renderTarget);
       renderer.render(scene, camera);
       
-      // 3. Show the water overlay plane
-      waterMesh.visible = true;
-      
-      // 4. Render final refracted composited scene to screen
+      // 2. Render final 2D water post-process overlay plane directly to screen
       renderer.setRenderTarget(null);
-      renderer.render(scene, camera);
+      renderer.render(postScene, postCamera);
     }
   }
 
@@ -901,20 +906,20 @@
     if (!threeContainer || !renderer || !camera || !waterMesh || !renderTarget) return;
     const width = threeContainer.clientWidth;
     const height = threeContainer.clientHeight;
+    const pixelRatio = window.devicePixelRatio || 1;
     
     camera.aspect = width / height;
     camera.position.set(0, 0, width < 768 ? 9.0 : 7.5);
     camera.updateProjectionMatrix();
     
     renderer.setSize(width, height);
-    renderTarget.setSize(width, height);
+    
+    const targetWidth = width * Math.min(pixelRatio, 2);
+    const targetHeight = height * Math.min(pixelRatio, 2);
+    renderTarget.setSize(targetWidth, targetHeight);
 
-    // Rescale the water overlay mesh to fit screen aspect
-    const aspect = width / height;
-    waterMesh.geometry.dispose();
-    waterMesh.geometry = new THREE.PlaneGeometry(aspect * 7.5, 7.5);
     if (waterMaterial) {
-      waterMaterial.uniforms.aspect.value = aspect;
+      waterMaterial.uniforms.aspect.value = width / height;
     }
 
     positionCards();

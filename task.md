@@ -21,4 +21,7 @@
 - [x] Implement WebGLRenderTarget to capture scene (cards + background)
 - [x] Implement 2D fullscreen water overlay mesh in front of camera with Ajarus shader
 - [x] Implement screen-space click and touch ripple propagation
+- [x] Configure high-DPI pixelRatio-aware WebGLRenderTarget to prevent card blurriness
+- [x] Create separate postScene & OrthographicCamera for 2D fullscreen water overlay quad
+- [x] Tune Ajarus shader parameters (frequency 45.0, emboss 0.055) for crisp, readable text and distinct water ripples
 - [x] Verify everything compiles and builds successfully using Nix
