@@ -15,6 +15,70 @@
   const aboutMeImg = `${baseUrl}about_me.png`;
   const resumeUrl = `${baseUrl}resume.tex`;
 
+  let matrixCanvas = $state<HTMLCanvasElement>();
+
+  function initMatrixRain() {
+    if (!matrixCanvas) return () => {};
+    const canvas = matrixCanvas;
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    if (!ctx) return () => {};
+
+    const resizeCanvas = () => {
+      canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
+      canvas.height = canvas.parentElement?.clientHeight || window.innerHeight;
+    };
+    resizeCanvas();
+
+    const katakana = "ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ";
+    const alphabet = katakana.split("");
+    const fontSize = 16;
+    let columns = canvas.width / fontSize;
+
+    let rainDrops: number[] = [];
+    for (let x = 0; x < columns; x++) {
+      rainDrops[x] = Math.random() * -50;
+    }
+
+    function draw() {
+      ctx.fillStyle = 'rgba(11, 12, 16, 0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ff2a85'; // Pink
+      ctx.font = 'bold ' + fontSize + 'px monospace';
+
+      for (let i = 0; i < rainDrops.length; i++) {
+        const text = alphabet[Math.floor(Math.random() * alphabet.length)];
+        const xPos = i * fontSize;
+        const yPos = rainDrops[i] * fontSize;
+
+        ctx.fillText(text, xPos, yPos);
+
+        if (yPos > canvas.height && Math.random() > 0.975) {
+          rainDrops[i] = 0;
+        }
+        rainDrops[i]++;
+      }
+    }
+
+    const interval = setInterval(draw, 33);
+
+    const handleResize = () => {
+      resizeCanvas();
+      columns = canvas.width / fontSize;
+      rainDrops = [];
+      for (let x = 0; x < columns; x++) {
+        rainDrops[x] = Math.random() * -50;
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', handleResize);
+    };
+  }
+
   onMount(() => {
     // Entrance animations
     const ctx = gsap.context(() => {
@@ -23,6 +87,8 @@
         { y: 0, opacity: 1, duration: 0.35, stagger: 0.05, ease: 'power2.out' }
       );
     }, containerRef);
+
+    const cleanupMatrix = initMatrixRain();
 
     // Fetch dynamic content in IIFE
     (async () => {
@@ -48,7 +114,10 @@
       }
     })();
 
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      cleanupMatrix();
+    };
   });
 
   const dispatch = (tabName: string) => {
@@ -76,7 +145,12 @@
   }
 </script>
 
-<div bind:this={containerRef} class="py-12 lg:py-20 max-w-[1200px] mx-auto px-6">
+<div bind:this={containerRef} class="py-12 lg:py-20 max-w-[1200px] mx-auto px-6 relative z-10">
+  <!-- Matrix rain foreground overlay -->
+  <canvas 
+    bind:this={matrixCanvas} 
+    class="absolute inset-0 w-full h-full pointer-events-none select-none z-20 opacity-20"
+  ></canvas>
   
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
     

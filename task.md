@@ -1,0 +1,24 @@
+- [x] Integrate Google Font `DotGothic16` (Windows Dots style) and style headings
+- [x] Update Bio tab header to "About me" and remove corporate phrases
+- [x] Keep about me portrait in full color (remove grayscale classes) and remove portrait overlay
+- [x] Dynamically query active repositories and events from GitHub REST API
+- [x] Add link to LinkedIn activity posts feed on the Bio tab
+- [x] Remove the Contact section and CTA blocks completely
+- [x] Dynamically fetch and display live pinned GitHub projects (ShadPS5, Project-Golf-Ball, etc.)
+- [x] Dynamically fetch and display projects parsed from resume.tex in the Bio tab
+- [x] Remove the Services section completely and simplify main SPA routing
+- [x] Curl and save Cowboy Bebop backdrop image from Pinterest into public/bebop_bg.jpg
+- [x] Implement widescreen 3D HUD console in Three.js for Capabilities tab
+- [x] Split resume data into 6 separate floating 3D CRT monitor cards (Profile, Skills, Education, Projects, Achievements, Experience)
+- [x] Implement raycaster scroll focus and mobile stacked drag scrolling
+- [x] Replace WebGL black void with Cowboy Bebop backdrop as scene.background
+- [x] Scatter cards in space with stagger rotation and staggered depth
+- [x] restrict mouse parallax to tilt specifically only the hovered card (and zoom it forward in Z)
+- [x] Double font sizes (headers 44px, body 26-28px) inside the CRT Canvas textures
+- [x] Implement wavy transparent pool ShaderMaterial flat on the X-Z plane
+- [x] Implement CRT Screen ShaderMaterial for cards (curved warp, scanlines, color splitting)
+- [x] Implement real-time floaty drifting physics engine (bobbing, wave slope alignment, Brownian velocities, springs)
+- [x] Remove drag-rotation camera code and clean HUD text labels from HTML
+- [x] Check GitHub Actions build pipeline logs and diagnose deployment status
+- [x] Implement Japanese Katakana Matrix Rain foreground canvas overlay in Bio tab
+- [x] Verify everything compiles and builds successfully using Nix
