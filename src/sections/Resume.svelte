@@ -37,7 +37,15 @@
   let scene: THREE.Scene | null = null;
   let camera: THREE.PerspectiveCamera | null = null;
   let cardGroup: THREE.Group | null = null;
+  
+  // Widescreen Background plane
+  let bgMesh: THREE.Mesh | null = null;
+
+  // 2D Water overlay post-process
   let waterMesh: THREE.Mesh | null = null;
+  let waterMaterial: THREE.ShaderMaterial | null = null;
+  let renderTarget: THREE.WebGLRenderTarget | null = null;
+
   let animId = 0;
 
   // Active textures & CRT shaders
@@ -51,7 +59,6 @@
   }>({});
 
   let crtMaterials: THREE.ShaderMaterial[] = [];
-  let waterMaterial: THREE.ShaderMaterial | null = null;
 
   // Card screen submeshes for raycast hovering
   let cardMeshes: THREE.Object3D[] = [];
@@ -60,32 +67,22 @@
   let mouseX = 0;
   let mouseY = 0;
 
-  // Raycaster for card-level scroll hovering and ripple injection
+  // Raycaster for card-level scroll hovering
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let hoveredCardName = $state('');
 
-  // Pinned Default Anchors on pool surface
-  const anchors = {
-    profile:      { x: -3.3, z: 0.8 },
-    skills:       { x: -3.0, z: -1.6 },
-    education:    { x: -0.1, z: 1.2 },
-    projects:     { x: 0.2,  z: -1.3 },
-    achievements: { x: 3.2,  z: 0.8 },
-    experience:   { x: 3.0,  z: -1.6 }
+  // Pinned Default Scattered Layouts (reverted to original layout)
+  const defaultLayouts = {
+    profile:      { x: -3.4, y: 1.5,  z: 0.15, rx: 0.05,  ry: 0.08,  rz: -0.04 },
+    skills:       { x: -3.1, y: -1.3, z: -0.25, rx: -0.03, ry: -0.05, rz: 0.03 },
+    education:    { x: -0.1, y: 1.55, z: -0.1,  rx: 0.02,  ry: 0.02,  rz: 0.02 },
+    projects:     { x: 0.25, y: -1.3, z: 0.1,  rx: -0.03, ry: -0.03, rz: -0.03 },
+    achievements: { x: 3.35, y: 1.45, z: 0.3,  rx: 0.04,  ry: -0.08, rz: 0.05 },
+    experience:   { x: 3.4,  y: -1.45, z: -0.2,  rx: -0.02, ry: 0.06,  rz: -0.02 }
   };
 
-  // Drifting floaty velocity vectors
-  let velocities = {
-    profile:      { x: 0.001,  z: -0.001 },
-    skills:       { x: -0.001, z: 0.0015 },
-    education:    { x: 0.0008, z: 0.0008 },
-    projects:     { x: -0.0012, z: -0.0008 },
-    achievements: { x: 0.001,  z: -0.0012 },
-    experience:   { x: -0.0008, z: 0.0008 }
-  };
-
-  // Ripple simulation queue
+  // Ripple simulation queue (coordinates in UV space: 0.0 to 1.0)
   let activeRipples: { x: number; y: number; time: number }[] = [];
 
   onMount(() => {
@@ -116,31 +113,14 @@
       
       if (renderer) renderer.dispose();
       Object.values(textures).forEach(tex => tex.dispose());
-      if (waterMesh) {
-        waterMesh.geometry.dispose();
-        (waterMesh.material as THREE.Material).dispose();
-      }
+      if (renderTarget) renderTarget.dispose();
     };
   });
 
-  // Wave height calculation equation (matches Shader math)
-  function getWaveHeight(x: number, z: number, t: number): number {
-    const h1 = 0.15 * Math.sin(0.8 * x + 1.5 * t);
-    const h2 = 0.15 * Math.cos(0.8 * z + 1.2 * t);
-    return h1 + h2;
-  }
-
-  // Wave slope calculator to tilt the cards
-  function getWaveSlope(x: number, z: number, t: number) {
-    const dfdx = 0.15 * 0.8 * Math.cos(0.8 * x + 1.5 * t);
-    const dfdz = -0.15 * 0.8 * Math.sin(0.8 * z + 1.2 * t);
-    return { dfdx, dfdz };
-  }
-
-  // Inject a ripple on click/touch
-  function addRipple(lx: number, ly: number) {
+  // Inject a ripple in UV coordinates
+  function addRipple(u: number, v: number) {
     const now = Date.now() * 0.001;
-    activeRipples.push({ x: lx, y: ly, time: now });
+    activeRipples.push({ x: u, y: v, time: now });
 
     // Keep only latest 8 ripples
     if (activeRipples.length > 8) {
@@ -159,31 +139,24 @@
     }
   }
 
-  // Handles clicking on the water to spawn a splash ripple
-  function handleWaterClick(clientX: number, clientY: number) {
-    if (!renderer || !camera || !waterMesh) return;
+  // Handles clicking on the water to spawn a 2D splash ripple overlay
+  function handleMouseDown(e: MouseEvent) {
+    if (!renderer) return;
     const rect = renderer.domElement.getBoundingClientRect();
     
-    mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObject(waterMesh);
-
-    if (intersects.length > 0) {
-      const hit = intersects[0];
-      const localPt = waterMesh.worldToLocal(hit.point.clone());
-      addRipple(localPt.x, localPt.y);
-    }
-  }
-
-  function handleMouseDown(e: MouseEvent) {
-    handleWaterClick(e.clientX, e.clientY);
+    // Normalized screen UV coords
+    const u = (e.clientX - rect.left) / rect.width;
+    const v = 1.0 - (e.clientY - rect.top) / rect.height;
+    
+    addRipple(u, v);
   }
 
   function handleTouchStart(e: TouchEvent) {
-    if (e.touches.length > 0) {
-      handleWaterClick(e.touches[0].clientX, e.touches[0].clientY);
+    if (e.touches.length > 0 && renderer) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const u = (e.touches[0].clientX - rect.left) / rect.width;
+      const v = 1.0 - (e.touches[0].clientY - rect.top) / rect.height;
+      addRipple(u, v);
     }
   }
 
@@ -574,15 +547,15 @@
     return group;
   }
 
-  // Position cards in space dynamically
+  // Position cards in space dynamically (reverted to original layout)
   function positionCards() {
     if (!cardGroup || cardGroup.children.length < 6) return;
     const isMobile = window.innerWidth < 768;
 
     cardGroup.children.forEach(card => {
-      const name = card.name as keyof typeof anchors;
-      const anchor = anchors[name];
-      if (!anchor) return;
+      const name = card.name as keyof typeof defaultLayouts;
+      const def = defaultLayouts[name];
+      if (!def) return;
 
       if (isMobile) {
         let yPos = 6.2;
@@ -596,8 +569,8 @@
         card.position.set(0, yPos, 0);
         card.rotation.set(0, 0, 0);
       } else {
-        card.position.set(anchor.x, -0.5, anchor.z);
-        card.rotation.set(0, 0, 0);
+        card.position.set(def.x, def.y, def.z);
+        card.rotation.set(def.rx, def.ry, def.rz);
       }
     });
   }
@@ -611,82 +584,112 @@
 
     // 1. Scene setup
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0a0b10, 0.035);
 
-    // Elevated camera looking slightly down at the pool
     camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 2.5, width < 768 ? 9.5 : 8.0);
-    camera.lookAt(0, -0.5, -0.5);
+    camera.position.set(0, 0, width < 768 ? 9.0 : 7.5);
+    camera.lookAt(0, 0, 0);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     threeContainer.appendChild(renderer.domElement);
 
-    // 2. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+    // 2. Setup WebGLRenderTarget for 2D water post-processing
+    renderTarget = new THREE.WebGLRenderTarget(width, height);
+
+    // 3. Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0xe0a92e, 1.7);
-    dirLight.position.set(5, 7, 5);
+    dirLight.position.set(5, 5, 5);
     scene.add(dirLight);
 
-    // 3. Setup water material custom Ajarus + Interactive Ripples shader
+    // 4. Load Cowboy Bebop Background plane in scene background
+    const bgLoader = new THREE.TextureLoader();
+    bgLoader.load(`${baseUrl}bebop_bg.jpg`, (bgTexture) => {
+      bgTexture.colorSpace = THREE.SRGBColorSpace;
+      
+      const bgGeom = new THREE.PlaneGeometry(30, 18);
+      const bgMat = new THREE.MeshBasicMaterial({ map: bgTexture, depthWrite: false });
+      bgMesh = new THREE.Mesh(bgGeom, bgMat);
+      bgMesh.position.z = -7.0;
+      scene?.add(bgMesh);
+    });
+
+    // 5. Generate all 6 cards floating at z = 0
+    const cardNames: ('profile' | 'skills' | 'education' | 'projects' | 'achievements' | 'experience')[] = [
+      'profile', 'skills', 'education', 'projects', 'achievements', 'experience'
+    ];
+
+    cardGroup = new THREE.Group();
+    cardMeshes = [];
+    crtMaterials = [];
+
+    cardNames.forEach(name => {
+      const canvas = canvases[name];
+      if (!canvas) return;
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      textures[name] = tex;
+
+      updateCardTexture(name);
+
+      const card = createCardMesh(name, tex);
+      cardGroup!.add(card);
+
+      const screenMesh = card.children[0];
+      cardMeshes.push(screenMesh);
+    });
+
+    scene.add(cardGroup);
+    positionCards();
+
+    // 6. Setup Wavy transparent pool overlay directly in front of the camera (z = 1.5)
+    // Refracts both cards and Cowboy Bebop background image dynamically!
+    const aspect = width / height;
     waterMaterial = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
-        bebopTexture: { value: new THREE.Texture() },
+        aspect: { value: aspect },
+        bebopTexture: { value: renderTarget.texture },
         ripples: { value: Array.from({ length: 8 }, () => new THREE.Vector3(0, 0, -999)) },
         activeRipplesCount: { value: 0 }
       },
       vertexShader: `
-        uniform float time;
-        varying vec3 vPosition;
-        varying vec3 vLocalPosition;
         varying vec2 vUv;
-        
         void main() {
           vUv = uv;
-          vec3 pos = position;
-          vLocalPosition = position;
-          
-          // Physical wave height deforming surface vertically
-          float h1 = 0.15 * sin(0.8 * pos.x + 1.5 * time);
-          float h2 = 0.15 * cos(0.8 * pos.y + 1.2 * time); // pos.y is Z in local coordinates before rotation
-          pos.z += h1 + h2;
-          
-          vPosition = pos;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
         uniform float time;
+        uniform float aspect;
         uniform sampler2D bebopTexture;
-        varying vec3 vPosition;
-        varying vec3 vLocalPosition;
         varying vec2 vUv;
         
-        // Ripples tracking (x, y are local water coords, z is birthTime)
         uniform vec3 ripples[8];
         uniform int activeRipplesCount;
 
         const float PI = 3.1415926535897932;
 
-        // Ajarus shader params
-        const float speed = 0.2;
-        const float speed_x = 0.3;
-        const float speed_y = 0.3;
+        // Ajarus shader params (emboss refraction and reflections)
+        const float speed = 0.15;
+        const float speed_x = 0.25;
+        const float speed_y = 0.25;
 
-        const float emboss = 0.50;
-        const float intensity = 2.4;
+        const float emboss = 0.35;
+        const float intensity = 2.0;
         const int steps = 8;
         const float frequency = 6.0;
         const int angle = 7;
 
         const float delta = 60.0;
-        const float gain = 700.0;
+        const float gain = 650.0;
         const float reflectionCutOff = 0.012;
-        const float reflectionIntensity = 200000.0;
+        const float reflectionIntensity = 180000.0;
 
         float col(vec2 coord, float timeVal)
         {
@@ -710,7 +713,6 @@
           vec2 c1 = p;
           vec2 c2 = p;
           
-          // 1. Calculate Ajarus displacement
           float cc1 = col(c1, timeVal);
 
           c2.x += 1.0 / delta;
@@ -720,30 +722,34 @@
           c2.y += 1.0 / delta;
           float dy = emboss * (cc1 - col(c2, timeVal)) / delta;
 
-          // 2. Add interactive expanding ripples (analytical wave equation)
+          // Add interactive concentric screen-space ripples
           for (int i = 0; i < 8; i++) {
             if (i >= activeRipplesCount) break;
             vec3 ripple = ripples[i];
             float age = time - ripple.z;
             if (age < 0.0 || age > 4.5) continue;
 
-            float dist = distance(vLocalPosition.xy, ripple.xy);
-            float waveSpeed = 4.5;
+            // distance check scaled by monitor aspect to maintain circle shape
+            vec2 uvAspect = vUv * vec2(aspect, 1.0);
+            vec2 rippleAspect = ripple.xy * vec2(aspect, 1.0);
+            float dist = distance(uvAspect, rippleAspect);
+
+            float waveSpeed = 0.65;
             float waveFront = waveSpeed * age;
 
             if (dist < waveFront && dist > 0.0) {
               float diff = dist - waveFront;
-              float wave = sin(8.0 * diff) * exp(-1.5 * age) * 0.35;
-              vec2 dir = (vLocalPosition.xy - ripple.xy) / dist;
+              // Damped sine wave
+              float wave = sin(22.0 * diff) * exp(-1.8 * age) * 0.14;
+              vec2 dir = (uvAspect - rippleAspect) / dist;
               
-              dx += dir.x * wave * 0.02;
-              dy += dir.y * wave * 0.02;
+              dx += dir.x * wave * 0.04;
+              dy += dir.y * wave * 0.04;
             }
           }
 
-          // Refract UV coordinates
-          c1.x += dx * 2.0;
-          c1.y = fract(c1.y + dy * 2.0);
+          c1.x += dx * 0.65;
+          c1.y = fract(c1.y + dy * 0.65);
 
           float alpha = 1.0 + dot(dx, dy) * gain;
           
@@ -753,65 +759,19 @@
             alpha = pow(alpha, ddx * ddy * reflectionIntensity);
           }
           
-          // Sample refracted texture
           vec4 colTex = texture2D(bebopTexture, c1) * alpha;
           gl_FragColor = colTex;
         }
-      `,
-      transparent: true,
-      depthWrite: false
+      `
     });
 
-    const waterGeom = new THREE.PlaneGeometry(32, 22, 64, 64);
+    // Make the overlay plane cover the camera viewport exactly
+    const waterGeom = new THREE.PlaneGeometry(aspect * 7.5, 7.5);
     waterMesh = new THREE.Mesh(waterGeom, waterMaterial);
-    waterMesh.rotation.x = -Math.PI / 2; // Flat horizontal plane
-    waterMesh.position.y = -0.5;         // Pool surface height
+    waterMesh.position.set(0, 0, 1.5);
     scene.add(waterMesh);
 
-    // 4. Load Cowboy Bebop Background image and assign to scene & water
-    const bgLoader = new THREE.TextureLoader();
-    bgLoader.load(`${baseUrl}bebop_bg.jpg`, (bgTexture) => {
-      bgTexture.colorSpace = THREE.SRGBColorSpace;
-      bgTexture.wrapS = THREE.ClampToEdgeWrapping;
-      bgTexture.wrapT = THREE.ClampToEdgeWrapping;
-      
-      if (scene) scene.background = bgTexture;
-      if (waterMaterial) {
-        waterMaterial.uniforms.bebopTexture.value = bgTexture;
-      }
-    });
-
-    // 5. Generate all 6 cards
-    const cardNames: ('profile' | 'skills' | 'education' | 'projects' | 'achievements' | 'experience')[] = [
-      'profile', 'skills', 'education', 'projects', 'achievements', 'experience'
-    ];
-
-    cardGroup = new THREE.Group();
-    cardMeshes = [];
-    crtMaterials = [];
-
-    cardNames.forEach(name => {
-      const canvas = canvases[name];
-      if (!canvas) return;
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      textures[name] = tex;
-
-      updateCardTexture(name);
-
-      const card = createCardMesh(name, tex);
-      cardGroup!.add(card);
-
-      // Save references of screen face meshes specifically for raycasting
-      const screenMesh = card.children[0];
-      cardMeshes.push(screenMesh);
-    });
-
-    scene.add(cardGroup);
-    positionCards();
-
-    // 6. Global Mouse Move Listener
+    // 7. Global Mouse Move Listener
     window.addEventListener('mousemove', handleMouseMoveGlobal);
 
     tick();
@@ -820,10 +780,10 @@
   function tick() {
     animId = requestAnimationFrame(tick);
 
-    if (renderer && scene && camera && cardGroup) {
+    if (renderer && scene && camera && cardGroup && waterMesh && renderTarget) {
       const time = Date.now() * 0.001;
 
-      // Update Shader time uniforms
+      // Update shader times
       if (waterMaterial) {
         waterMaterial.uniforms.time.value = time;
       }
@@ -831,92 +791,61 @@
         mat.uniforms.time.value = time;
       });
 
-      // Drifting pool floaties physics engine
+      // Hover-specific parallax adjustments
       const isMobile = window.innerWidth < 768;
 
       cardGroup.children.forEach(card => {
-        const name = card.name as keyof typeof anchors;
-        const anchor = anchors[name];
-        const vel = velocities[name];
-        if (!anchor || !vel) return;
-
         const isHovered = card.name === hoveredCardName;
+        const name = card.name as keyof typeof defaultLayouts;
+        const def = defaultLayouts[name];
+        if (!def) return;
+
+        // Hover depth lift and scale
+        const targetZ = isHovered ? def.z + 0.5 : def.z;
+        const targetScale = isHovered ? 1.06 : 1.0;
+
+        card.position.z += (targetZ - card.position.z) * 0.1;
+        card.scale.setScalar(card.scale.x + (targetScale - card.scale.x) * 0.1);
 
         if (!isMobile) {
-          // 1. Horizontal Drifting & Restoring Springs
-          const dist = Math.sqrt(Math.pow(card.position.x - anchor.x, 2) + Math.pow(card.position.z - anchor.z, 2));
-          if (dist > 1.1) {
-            // Spring velocity pull back
-            vel.x += (anchor.x - card.position.x) * 0.001;
-            vel.z += (anchor.z - card.position.z) * 0.001;
-          }
-
-          // Subtle Brownian drift pushes
-          vel.x += (Math.random() - 0.5) * 0.00015;
-          vel.z += (Math.random() - 0.5) * 0.00015;
-
-          // Velocity speed clamp
-          const speed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
-          const maxSpeed = 0.006;
-          if (speed > maxSpeed) {
-            vel.x = (vel.x / speed) * maxSpeed;
-            vel.z = (vel.z / speed) * maxSpeed;
-          }
-
-          // Apply drift displacements
-          card.position.x += vel.x;
-          card.position.z += vel.z;
-
-          // 2. Wave height displacement bobbing (floaties physics)
-          const localWaveHeight = getWaveHeight(card.position.x, card.position.z, time);
-          const targetY = -0.5 + localWaveHeight + (isHovered ? 0.45 : 0.0);
-          card.position.y += (targetY - card.position.y) * 0.1;
-
-          // 3. Wave slope alignment tilting (floaties slope calculation)
-          const slope = getWaveSlope(card.position.x, card.position.z, time);
-          
-          // Target scale
-          const targetScale = isHovered ? 1.06 : 1.0;
-          const currentScale = card.scale.x;
-          card.scale.setScalar(currentScale + (targetScale - currentScale) * 0.1);
-
           if (isHovered) {
-            // Hover parallax control
-            const targetRotX = slope.dfdz * 0.6 + mouseY * 0.4;
-            const targetRotY = mouseX * 0.4;
-            const targetRotZ = -slope.dfdx * 0.6;
+            const targetRotX = def.rx + mouseY * 0.45;
+            const targetRotY = def.ry + mouseX * 0.45;
 
             card.rotation.x += (targetRotX - card.rotation.x) * 0.1;
             card.rotation.y += (targetRotY - card.rotation.y) * 0.1;
-            card.rotation.z += (targetRotZ - card.rotation.z) * 0.1;
           } else {
-            // Wave alignment sways
-            const targetRotX = slope.dfdz * 0.6;
-            const targetRotZ = -slope.dfdx * 0.6;
-
-            card.rotation.x += (targetRotX - card.rotation.x) * 0.12;
-            card.rotation.y += (0 - card.rotation.y) * 0.12;
-            card.rotation.z += (targetRotZ - card.rotation.z) * 0.12;
+            card.rotation.x += (def.rx - card.rotation.x) * 0.12;
+            card.rotation.y += (def.ry - card.rotation.y) * 0.12;
+            card.rotation.z += (def.rz - card.rotation.z) * 0.12;
           }
-        } else {
-          // Mobile static spacing positions bobbing
-          card.scale.setScalar(1.0);
-          card.rotation.set(0, 0, 0);
         }
       });
 
-      // Smooth vertical scroll damping for mobile
+      // Smooth vertical scroll on mobile
       if (isMobile) {
         cardGroup.position.y += (groupScrollY - cardGroup.position.y) * 0.1;
       } else {
         cardGroup.position.y = 0;
       }
 
+      // 1. Hide the water overlay plane before rendering scene to texture
+      waterMesh.visible = false;
+      
+      // 2. Render cards and background to RenderTarget
+      renderer.setRenderTarget(renderTarget);
+      renderer.render(scene, camera);
+      
+      // 3. Show the water overlay plane
+      waterMesh.visible = true;
+      
+      // 4. Render final refracted composited scene to screen
+      renderer.setRenderTarget(null);
       renderer.render(scene, camera);
     }
   }
 
-  // Raycast hover tracking for scroll targets and unique card interaction
+  // Raycast hover tracking for scroll targets
   function handleMouseMoveGlobal(e: MouseEvent) {
     if (!renderer || !camera) return;
     const rect = renderer.domElement.getBoundingClientRect();
@@ -969,13 +898,25 @@
   });
 
   function handleResize() {
-    if (!threeContainer || !renderer || !camera) return;
+    if (!threeContainer || !renderer || !camera || !waterMesh || !renderTarget) return;
     const width = threeContainer.clientWidth;
     const height = threeContainer.clientHeight;
+    
     camera.aspect = width / height;
-    camera.position.set(0, 2.5, width < 768 ? 9.5 : 8.0);
+    camera.position.set(0, 0, width < 768 ? 9.0 : 7.5);
     camera.updateProjectionMatrix();
+    
     renderer.setSize(width, height);
+    renderTarget.setSize(width, height);
+
+    // Rescale the water overlay mesh to fit screen aspect
+    const aspect = width / height;
+    waterMesh.geometry.dispose();
+    waterMesh.geometry = new THREE.PlaneGeometry(aspect * 7.5, 7.5);
+    if (waterMaterial) {
+      waterMaterial.uniforms.aspect.value = aspect;
+    }
+
     positionCards();
   }
 </script>

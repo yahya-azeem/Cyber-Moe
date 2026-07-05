@@ -15,12 +15,10 @@
 - [x] Scatter cards in space with stagger rotation and staggered depth
 - [x] restrict mouse parallax to tilt specifically only the hovered card (and zoom it forward in Z)
 - [x] Double font sizes (headers 44px, body 26-28px) inside the CRT Canvas textures
-- [x] Implement wavy transparent pool ShaderMaterial flat on the X-Z plane
-- [x] Implement CRT Screen ShaderMaterial for cards (curved warp, scanlines, color splitting)
-- [x] Implement real-time floaty drifting physics engine (bobbing, wave slope alignment, Brownian velocities, springs)
-- [x] Remove drag-rotation camera code and clean HUD text labels from HTML
 - [x] Check GitHub Actions build pipeline logs and diagnose deployment status
 - [x] Implement Japanese Katakana Matrix Rain background canvas overlay in Bio tab (z-0 layer)
-- [x] Rewrite water shader to use Ajarus refractive and reflective pool math
-- [x] Implement interactive raycast click and touch start ripple generator (concentric damped sine ripples)
+- [x] Revert card positions to clean vertical 3x2 grid floating at z = 0
+- [x] Implement WebGLRenderTarget to capture scene (cards + background)
+- [x] Implement 2D fullscreen water overlay mesh in front of camera with Ajarus shader
+- [x] Implement screen-space click and touch ripple propagation
 - [x] Verify everything compiles and builds successfully using Nix
