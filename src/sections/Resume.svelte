@@ -37,9 +37,10 @@
   let scene: THREE.Scene | null = null;
   let camera: THREE.PerspectiveCamera | null = null;
   let cardGroup: THREE.Group | null = null;
+  let waterMesh: THREE.Mesh | null = null;
   let animId = 0;
 
-  // Active textures
+  // Active textures & CRT shaders
   let textures = $state<{
     profile?: THREE.CanvasTexture;
     achievements?: THREE.CanvasTexture;
@@ -49,29 +50,39 @@
     experience?: THREE.CanvasTexture;
   }>({});
 
+  let crtMaterials: THREE.ShaderMaterial[] = [];
+  let waterMaterial: THREE.ShaderMaterial | null = null;
+
   // Card screen submeshes for raycast hovering
   let cardMeshes: THREE.Object3D[] = [];
 
-  // Parallax and Dragging States
+  // Parallax mouse position
   let mouseX = 0;
   let mouseY = 0;
-  let isDragging = false;
-  let previousMouseX = 0;
-  let previousMouseY = 0;
 
-  // Raycaster for card-level scroll hovering and focus
+  // Raycaster for card-level scroll hovering
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let hoveredCardName = $state('');
 
-  // Pinned Default Scattered Layouts
-  const defaultLayouts = {
-    profile:      { x: -3.4, y: 1.5,  z: 0.15, rx: 0.05,  ry: 0.08,  rz: -0.04 },
-    skills:       { x: -3.1, y: -1.4, z: -0.25, rx: -0.03, ry: -0.05, rz: 0.03 },
-    education:    { x: -0.1, y: 1.55, z: -0.1,  rx: 0.02,  ry: 0.02,  rz: 0.02 },
-    projects:     { x: 0.25, y: -1.3, z: 0.1,  rx: -0.03, ry: -0.03, rz: -0.03 },
-    achievements: { x: 3.35, y: 1.45, z: 0.3,  rx: 0.04,  ry: -0.08, rz: 0.05 },
-    experience:   { x: 3.4,  y: -1.45, z: -0.2,  rx: -0.02, ry: 0.06,  rz: -0.02 }
+  // Pinned Default Anchors on pool surface
+  const anchors = {
+    profile:      { x: -3.3, z: 0.8 },
+    skills:       { x: -3.0, z: -1.6 },
+    education:    { x: -0.1, z: 1.2 },
+    projects:     { x: 0.2,  z: -1.3 },
+    achievements: { x: 3.2,  z: 0.8 },
+    experience:   { x: 3.0,  z: -1.6 }
+  };
+
+  // Drifting floaty velocity vectors
+  let velocities = {
+    profile:      { x: 0.001,  z: -0.001 },
+    skills:       { x: -0.001, z: 0.0015 },
+    education:    { x: 0.0008, z: 0.0008 },
+    projects:     { x: -0.0012, z: -0.0008 },
+    achievements: { x: 0.001,  z: -0.0012 },
+    experience:   { x: -0.0008, z: 0.0008 }
   };
 
   onMount(() => {
@@ -99,19 +110,38 @@
       // Cleanup Three.js loop and events
       cancelAnimationFrame(animId);
       window.removeEventListener('mousemove', handleMouseMoveGlobal);
-      window.removeEventListener('mouseup', handleMouseUpGlobal);
       
       if (renderer) renderer.dispose();
       Object.values(textures).forEach(tex => tex.dispose());
+      if (waterMesh) {
+        waterMesh.geometry.dispose();
+        (waterMesh.material as THREE.Material).dispose();
+      }
     };
   });
+
+  // Wave height calculation equation (matches Shader math)
+  function getWaveHeight(x: number, z: number, t: number): number {
+    const h1 = 0.15 * Math.sin(0.8 * x + 1.5 * t);
+    const h2 = 0.15 * Math.cos(0.8 * z + 1.2 * t);
+    return h1 + h2;
+  }
+
+  // Wave slope calculator to tilt the cards
+  function getWaveSlope(x: number, z: number, t: number) {
+    // Partial derivative df/dx
+    const dfdx = 0.15 * 0.8 * Math.cos(0.8 * x + 1.5 * t);
+    // Partial derivative df/dz
+    const dfdz = -0.15 * 0.8 * Math.sin(0.8 * z + 1.2 * t);
+    return { dfdx, dfdz };
+  }
 
   // Draws resume text dynamically onto each card canvas context with enlarged fonts
   function drawCardText(canvas: HTMLCanvasElement, type: string, data: ResumeData, scrollVal: number): number {
     const ctx = canvas.getContext('2d');
     if (!ctx) return 0;
 
-    // Background color (Slate/Charcoal)
+    // Clear background
     ctx.fillStyle = '#0f1115';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -129,7 +159,7 @@
       ctx.fillRect(25, y2, canvas.width - 50, 3);
     }
 
-    // Header prefix (Dotted size: 48px)
+    // Header prefix
     let headerText = '';
     if (type === 'profile') headerText = 'Capabilities Matrix';
     if (type === 'achievements') headerText = 'VERIFIED BYPASS';
@@ -409,14 +439,64 @@
   function createCardMesh(name: string, tex: THREE.CanvasTexture): THREE.Group {
     const group = new THREE.Group();
 
-    // 1. Front screen face (canvas texture)
+    // Custom CRT Screen Shader Material (curved glass warp, scanlines, aberration)
+    const screenMat = new THREE.ShaderMaterial({
+      uniforms: {
+        screenTexture: { value: tex },
+        time: { value: 0 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D screenTexture;
+        uniform float time;
+        varying vec2 vUv;
+        
+        vec2 curve(vec2 uv) {
+          uv = (uv - 0.5) * 2.0;
+          uv.x *= 1.0 + pow((uv.y / 5.0), 2.0);
+          uv.y *= 1.0 + pow((uv.x / 5.0), 2.0);
+          uv = (uv / 2.0) + 0.5;
+          return uv * 0.94 + 0.03;
+        }
+        
+        void main() {
+          vec2 uv = curve(vUv);
+          if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+            gl_FragColor = vec4(0.04, 0.04, 0.06, 1.0);
+            return;
+          }
+          
+          float split = 0.003;
+          vec4 col;
+          col.r = texture2D(screenTexture, vec2(uv.x - split, uv.y)).r;
+          col.g = texture2D(screenTexture, uv).g;
+          col.b = texture2D(screenTexture, vec2(uv.x + split, uv.y)).b;
+          col.a = 1.0;
+          
+          float scanline = sin(uv.y * 380.0 + time * 5.0) * 0.045;
+          col.rgb -= vec3(scanline);
+          
+          gl_FragColor = col;
+        }
+      `
+    });
+
+    crtMaterials.push(screenMat);
+
+    // 1. Front screen face (uses CRT Shader)
     const screenGeom = new THREE.BoxGeometry(2.8, 2.4, 0.05);
     const screenMatArray = [
       new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // right
       new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // left
       new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // top
       new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 }), // bottom
-      new THREE.MeshBasicMaterial({ map: tex }),                            // front
+      screenMat,                                                           // front (CRT Shader)
       new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.6 })   // back
     ];
     const screenMesh = new THREE.Mesh(screenGeom, screenMatArray);
@@ -449,9 +529,9 @@
     const isMobile = window.innerWidth < 768;
 
     cardGroup.children.forEach(card => {
-      const name = card.name as keyof typeof defaultLayouts;
-      const def = defaultLayouts[name];
-      if (!def) return;
+      const name = card.name as keyof typeof anchors;
+      const anchor = anchors[name];
+      if (!anchor) return;
 
       if (isMobile) {
         let yPos = 6.2;
@@ -465,9 +545,9 @@
         card.position.set(0, yPos, 0);
         card.rotation.set(0, 0, 0);
       } else {
-        // Scattered layout coordinates
-        card.position.set(def.x, def.y, def.z);
-        card.rotation.set(def.rx, def.ry, def.rz);
+        // Position at default pool X and Z anchors (bobs and drifts in physics loop)
+        card.position.set(anchor.x, -0.5, anchor.z);
+        card.rotation.set(0, 0, 0);
       }
     });
   }
@@ -481,10 +561,12 @@
 
     // 1. Scene setup
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0a0b10, 0.04); // subtle deep fog
+    scene.fog = new THREE.FogExp2(0x0a0b10, 0.035);
 
+    // Elevated camera looking slightly down at the pool
     camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.z = width < 768 ? 9.0 : 7.5;
+    camera.position.set(0, 2.5, width < 768 ? 9.5 : 8.0);
+    camera.lookAt(0, -0.5, -0.5);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
@@ -492,11 +574,11 @@
     threeContainer.appendChild(renderer.domElement);
 
     // 2. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xe0a92e, 1.5);
-    dirLight.position.set(5, 5, 5);
+    const dirLight = new THREE.DirectionalLight(0xe0a92e, 1.6);
+    dirLight.position.set(5, 7, 5);
     scene.add(dirLight);
 
     // 3. Load Cowboy Bebop Background image directly to scene.background
@@ -504,17 +586,68 @@
     bgLoader.load(`${baseUrl}bebop_bg.jpg`, (bgTexture) => {
       bgTexture.colorSpace = THREE.SRGBColorSpace;
       if (scene) {
-        scene.background = bgTexture; // Replace void with Bebop background image
+        scene.background = bgTexture; // Replaces black void completely
       }
     });
 
-    // 4. Generate all 6 cards
+    // 4. Incorporate a Wavy Transparent Pool Surface plane shader
+    waterMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 }
+      },
+      vertexShader: `
+        uniform float time;
+        varying vec3 vPosition;
+        varying vec2 vUv;
+        
+        void main() {
+          vUv = uv;
+          vec3 pos = position;
+          
+          // Wave height equation deforming surface vertically
+          float h1 = 0.15 * sin(0.8 * pos.x + 1.5 * time);
+          float h2 = 0.15 * cos(0.8 * pos.y + 1.2 * time); // pos.y is Z in local coords before rotation
+          pos.z += h1 + h2;
+          
+          vPosition = pos;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float time;
+        varying vec3 vPosition;
+        varying vec2 vUv;
+        
+        void main() {
+          float r1 = sin(vPosition.x * 2.5 + time * 1.5);
+          float r2 = cos(vPosition.y * 2.5 + time * 1.2);
+          float ripple = 0.5 + 0.5 * (r1 * r2);
+          
+          // Transparent deep water cyan
+          vec3 waterColor = vec3(0.06, 0.36, 0.44);
+          float spec = pow(ripple, 8.0) * 0.22;
+          
+          gl_FragColor = vec4(waterColor + vec3(spec), 0.38);
+        }
+      `,
+      transparent: true,
+      depthWrite: false
+    });
+
+    const waterGeom = new THREE.PlaneGeometry(32, 22, 64, 64);
+    waterMesh = new THREE.Mesh(waterGeom, waterMaterial);
+    waterMesh.rotation.x = -Math.PI / 2; // Flat horizontal plane
+    waterMesh.position.y = -0.5;         // Pool surface height
+    scene.add(waterMesh);
+
+    // 5. Generate all 6 cards
     const cardNames: ('profile' | 'skills' | 'education' | 'projects' | 'achievements' | 'experience')[] = [
       'profile', 'skills', 'education', 'projects', 'achievements', 'experience'
     ];
 
     cardGroup = new THREE.Group();
     cardMeshes = [];
+    crtMaterials = [];
 
     cardNames.forEach(name => {
       const canvas = canvases[name];
@@ -537,9 +670,8 @@
     scene.add(cardGroup);
     positionCards();
 
-    // 5. Global Event Listeners
+    // 6. Global Mouse Move Listener
     window.addEventListener('mousemove', handleMouseMoveGlobal);
-    window.addEventListener('mouseup', handleMouseUpGlobal);
 
     tick();
   }
@@ -550,46 +682,90 @@
     if (renderer && scene && camera && cardGroup) {
       const time = Date.now() * 0.001;
 
-      // Animate card group parallax (subtle overall drift)
-      if (!isDragging && window.innerWidth >= 768) {
-        cardGroup.rotation.y = Math.sin(time * 0.3) * 0.02;
-        cardGroup.rotation.x = Math.cos(time * 0.3) * 0.01;
+      // Update Shader time uniforms
+      if (waterMaterial) {
+        waterMaterial.uniforms.time.value = time;
       }
+      crtMaterials.forEach(mat => {
+        mat.uniforms.time.value = time;
+      });
 
-      // Card-specific hover parallax, elevation and return states
+      // Drifting pool floaties physics engine
+      const isMobile = window.innerWidth < 768;
+
       cardGroup.children.forEach(card => {
+        const name = card.name as keyof typeof anchors;
+        const anchor = anchors[name];
+        const vel = velocities[name];
+        if (!anchor || !vel) return;
+
         const isHovered = card.name === hoveredCardName;
-        const name = card.name as keyof typeof defaultLayouts;
-        const def = defaultLayouts[name];
-        if (!def) return;
 
-        // Hover depth lift and scale transition
-        const targetZ = isHovered ? def.z + 0.5 : def.z;
-        const targetScale = isHovered ? 1.06 : 1.0;
+        if (!isMobile) {
+          // 1. Horizontal Drifting & Restoring Springs
+          const dist = Math.sqrt(Math.pow(card.position.x - anchor.x, 2) + Math.pow(card.position.z - anchor.z, 2));
+          if (dist > 1.1) {
+            // Spring velocity pull back
+            vel.x += (anchor.x - card.position.x) * 0.001;
+            vel.z += (anchor.z - card.position.z) * 0.001;
+          }
 
-        card.position.z += (targetZ - card.position.z) * 0.1;
-        
-        const currentScale = card.scale.x;
-        const newScale = currentScale + (targetScale - currentScale) * 0.1;
-        card.scale.setScalar(newScale);
+          // Subtle Brownian drift pushes
+          vel.x += (Math.random() - 0.5) * 0.00015;
+          vel.z += (Math.random() - 0.5) * 0.00015;
 
-        if (isHovered && !isDragging) {
-          // Tilt the hovered card specifically to follow cursor relative to its base rotation
-          const targetRotX = def.rx + mouseY * 0.5;
-          const targetRotY = def.ry + mouseX * 0.5;
+          // Velocity speed clamp
+          const speed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+          const maxSpeed = 0.006;
+          if (speed > maxSpeed) {
+            vel.x = (vel.x / speed) * maxSpeed;
+            vel.z = (vel.z / speed) * maxSpeed;
+          }
 
-          card.rotation.x += (targetRotX - card.rotation.x) * 0.1;
-          card.rotation.y += (targetRotY - card.rotation.y) * 0.1;
-        } else if (!isDragging) {
-          // Return unhovered card to its default scattered rotation angles
-          card.rotation.x += (def.rx - card.rotation.x) * 0.12;
-          card.rotation.y += (def.ry - card.rotation.y) * 0.12;
-          card.rotation.z += (def.rz - card.rotation.z) * 0.12;
+          // Apply drift displacements
+          card.position.x += vel.x;
+          card.position.z += vel.z;
+
+          // 2. Wave height displacement bobbing (floaties physics)
+          const localWaveHeight = getWaveHeight(card.position.x, card.position.z, time);
+          const targetY = -0.5 + localWaveHeight + (isHovered ? 0.45 : 0.0);
+          card.position.y += (targetY - card.position.y) * 0.1;
+
+          // 3. Wave slope alignment tilting (floaties slope calculation)
+          const slope = getWaveSlope(card.position.x, card.position.z, time);
+          
+          // Target scale
+          const targetScale = isHovered ? 1.06 : 1.0;
+          const currentScale = card.scale.x;
+          card.scale.setScalar(currentScale + (targetScale - currentScale) * 0.1);
+
+          if (isHovered) {
+            // Hover parallax control
+            const targetRotX = slope.dfdz * 0.6 + mouseY * 0.4;
+            const targetRotY = mouseX * 0.4;
+            const targetRotZ = -slope.dfdx * 0.6;
+
+            card.rotation.x += (targetRotX - card.rotation.x) * 0.1;
+            card.rotation.y += (targetRotY - card.rotation.y) * 0.1;
+            card.rotation.z += (targetRotZ - card.rotation.z) * 0.1;
+          } else {
+            // Wave alignment sways
+            const targetRotX = slope.dfdz * 0.6;
+            const targetRotZ = -slope.dfdx * 0.6;
+
+            card.rotation.x += (targetRotX - card.rotation.x) * 0.12;
+            card.rotation.y += (0 - card.rotation.y) * 0.12;
+            card.rotation.z += (targetRotZ - card.rotation.z) * 0.12;
+          }
+        } else {
+          // Mobile static spacing positions bobbing
+          card.scale.setScalar(1.0);
+          card.rotation.set(0, 0, 0);
         }
       });
 
       // Smooth vertical scroll damping for mobile
-      if (window.innerWidth < 768) {
+      if (isMobile) {
         cardGroup.position.y += (groupScrollY - cardGroup.position.y) * 0.1;
       } else {
         cardGroup.position.y = 0;
@@ -619,31 +795,6 @@
     } else {
       hoveredCardName = '';
     }
-
-    if (isDragging && cardGroup) {
-      const deltaX = e.clientX - previousMouseX;
-      const deltaY = e.clientY - previousMouseY;
-
-      if (window.innerWidth < 768) {
-        groupScrollY = Math.max(-8, Math.min(8, groupScrollY + deltaY * 0.025));
-      } else {
-        cardGroup.rotation.y += deltaX * 0.005;
-        cardGroup.rotation.x += deltaY * 0.005;
-      }
-
-      previousMouseX = e.clientX;
-      previousMouseY = e.clientY;
-    }
-  }
-
-  function handleMouseDown(e: MouseEvent) {
-    isDragging = true;
-    previousMouseX = e.clientX;
-    previousMouseY = e.clientY;
-  }
-
-  function handleMouseUpGlobal() {
-    isDragging = false;
   }
 
   // Handle local wheel scrolling on target cards
@@ -681,7 +832,7 @@
     const width = threeContainer.clientWidth;
     const height = threeContainer.clientHeight;
     camera.aspect = width / height;
-    camera.position.z = width < 768 ? 9.0 : 7.5;
+    camera.position.set(0, 2.5, width < 768 ? 9.5 : 8.0);
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
     positionCards();
@@ -702,29 +853,11 @@
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div 
       bind:this={threeContainer} 
-      onmousedown={handleMouseDown}
       onwheel={handleWheel}
-      class="w-full h-full cursor-grab active:cursor-grabbing"
+      class="w-full h-full"
       role="region"
       aria-label="3D Capabilities Board Controls"
     ></div>
-
-    <!-- Retro overlay HUD reading -->
-    <div class="absolute top-6 left-6 pointer-events-none select-none font-mono text-[10px] text-[#e0a92e] space-y-1">
-      <div class="flex items-center gap-2">
-        <span class="w-1.5 h-1.5 bg-[#e0a92e] animate-ping"></span>
-        <span class="font-bold tracking-widest">// HUD MONITOR: CAPABILITIES MATRIX</span>
-      </div>
-      <p class="text-white/70 font-light">SOURCE: Dynamic LaTeX compiler load // 100% Ok</p>
-    </div>
-
-    <div class="absolute bottom-6 left-6 pointer-events-none select-none font-mono text-[9px] text-[#e0a92e]/70 space-y-1">
-      <p class="uppercase font-semibold tracking-wider">Drag void to rotate board</p>
-      <p class="uppercase font-semibold tracking-wider">Scroll over dynamic cards to scan files</p>
-      {#if hoveredCardName}
-        <p class="text-[#a8201a] font-bold uppercase tracking-widest mt-1">>> HOVERING REGION: {hoveredCardName}</p>
-      {/if}
-    </div>
 
     <!-- Hidden dynamic canvas texture targets -->
     <canvas bind:this={canvases.profile} width="1024" height="1024" class="hidden"></canvas>
