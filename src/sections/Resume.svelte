@@ -686,92 +686,47 @@
         uniform vec3 ripples[8];
         uniform int activeRipplesCount;
 
-        const float PI = 3.1415926535897932;
-
-        // Optimized Ajarus shader params for fine, sharp, legible 2D ripples
-        const float speed = 0.08;
-        const float speed_x = 0.06;
-        const float speed_y = 0.06;
-
-        const float emboss = 0.055;        // Subtle displacement keeps text perfectly sharp
-        const float intensity = 1.6;
-        const int steps = 6;
-        const float frequency = 45.0;     // High frequency creates tight, crisp ripples
-        const int angle = 7;
-
-        const float delta = 60.0;
-        const float gain = 650.0;
-        const float reflectionCutOff = 0.012;
-        const float reflectionIntensity = 180000.0;
-
-        float col(vec2 coord, float timeVal)
-        {
-          float delta_theta = 2.0 * PI / float(angle);
-          float colVal = 0.0;
-          float theta = 0.0;
-          for (int i = 0; i < steps; i++)
-          {
-            vec2 adjc = coord;
-            theta = delta_theta * float(i);
-            adjc.x += cos(theta) * timeVal * speed + timeVal * speed_x;
-            adjc.y -= sin(theta) * timeVal * speed - timeVal * speed_y;
-            colVal = colVal + cos((adjc.x * cos(theta) - adjc.y * sin(theta)) * frequency) * intensity;
-          }
-          return cos(colVal);
-        }
-
         void main() {
-          float timeVal = time * 1.3;
-          vec2 p = vUv;
-          vec2 c1 = p;
-          vec2 c2 = p;
+          vec2 uv = vUv;
+          float timeVal = time * 1.5;
           
-          float cc1 = col(c1, timeVal);
-
-          c2.x += 1.0 / delta;
-          float dx = emboss * (cc1 - col(c2, timeVal)) / delta;
-
-          c2.x = p.x;
-          c2.y += 1.0 / delta;
-          float dy = emboss * (cc1 - col(c2, timeVal)) / delta;
-
-          // Interactive ripples deforming refraction
+          // Calculate three sets of shifting sine waves for organic fluid overlay
+          float wave1 = sin(uv.x * 24.0 + timeVal) * 0.008;
+          float wave2 = cos(uv.y * 24.0 + timeVal * 1.1) * 0.008;
+          float wave3 = sin((uv.x + uv.y) * 16.0 - timeVal * 1.3) * 0.005;
+          
+          vec2 offset = vec2(wave1 + wave3, wave2 + wave3);
+          
+          // Add expanding concentric click/touch ripples (damped wave propagation)
           for (int i = 0; i < 8; i++) {
             if (i >= activeRipplesCount) break;
             vec3 ripple = ripples[i];
             float age = time - ripple.z;
-            if (age < 0.0 || age > 4.5) continue;
+            if (age < 0.0 || age > 4.0) continue;
 
-            vec2 uvAspect = vUv * vec2(aspect, 1.0);
+            vec2 uvAspect = uv * vec2(aspect, 1.0);
             vec2 rippleAspect = ripple.xy * vec2(aspect, 1.0);
             float dist = distance(uvAspect, rippleAspect);
 
-            float waveSpeed = 0.65;
+            float waveSpeed = 0.75;
             float waveFront = waveSpeed * age;
 
             if (dist < waveFront && dist > 0.0) {
               float diff = dist - waveFront;
-              // High frequency expanding concentric wave
-              float wave = sin(38.0 * diff) * exp(-1.6 * age) * 0.12;
+              // High frequency ripple rings
+              float wave = sin(34.0 * diff) * exp(-1.6 * age) * 0.1;
               vec2 dir = (uvAspect - rippleAspect) / dist;
-              
-              dx += dir.x * wave * 0.08;
-              dy += dir.y * wave * 0.08;
+              offset += dir * wave * 0.35; // Amplified displacement for high-visibility ripples
             }
           }
 
-          c1.x += dx * 0.6;
-          c1.y = fract(c1.y + dy * 0.6);
-
-          float alpha = 1.0 + dot(dx, dy) * gain;
+          // Sample refracted scene texture
+          vec4 colTex = texture2D(bebopTexture, fract(uv + offset));
           
-          float ddx = dx - reflectionCutOff;
-          float ddy = dy - reflectionCutOff;
-          if (ddx > 0.0 && ddy > 0.0) {
-            alpha = pow(alpha, ddx * ddy * reflectionIntensity);
-          }
+          // Add water specular shimmer highlights
+          float specular = max(0.0, offset.x + offset.y) * 3.5;
+          colTex.rgb += vec3(specular * 0.15);
           
-          vec4 colTex = texture2D(bebopTexture, c1) * alpha;
           gl_FragColor = colTex;
         }
       `,
