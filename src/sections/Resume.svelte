@@ -609,7 +609,7 @@
 
     // 3. Post-processing scene and orthographic camera for pixel-perfect 2D overlay
     postScene = new THREE.Scene();
-    postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
 
     // 4. Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
@@ -774,7 +774,9 @@
           vec4 colTex = texture2D(bebopTexture, c1) * alpha;
           gl_FragColor = colTex;
         }
-      `
+      `,
+      depthTest: false,
+      depthWrite: false
     });
 
     // 2D fullscreen quad in postScene

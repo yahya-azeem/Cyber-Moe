@@ -8,8 +8,10 @@
   let containerRef = $state<HTMLDivElement>();
   let resumeData = $state<ResumeData | null>(null);
   let events = $state<GitHubEvent[]>([]);
+  let linkedinPosts = $state<any[]>([]);
   let isLoading = $state(true);
   let isLoadingEvents = $state(true);
+  let isLoadingLinkedIn = $state(true);
 
   const baseUrl = import.meta.env.BASE_URL || '/';
   const aboutMeImg = `${baseUrl}about_me.png`;
@@ -102,6 +104,17 @@
       } catch (e) {
         console.error(e);
         isLoading = false;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}linkedin_posts.json`);
+        if (response.ok) {
+          linkedinPosts = await response.json();
+        }
+        isLoadingLinkedIn = false;
+      } catch (e) {
+        console.error(e);
+        isLoadingLinkedIn = false;
       }
 
       try {
@@ -342,19 +355,49 @@
         <h2 class="font-dots text-xl text-[#e0a92e] uppercase tracking-wider">Social Feed</h2>
       </div>
 
-      <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 text-center space-y-4 bebop-shadow">
-        <p class="text-[#f3efe0]/60 text-xs font-mono leading-relaxed">
-          I post systems R&D updates and GRC compliance analysis directly to my LinkedIn activity feed.
-        </p>
-        <a 
-          href="https://www.linkedin.com/in/muhammad-azeem-474612357/detail/recent-activity/shares/" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          class="btn-bebop w-full block text-xs"
-        >
-          Open LinkedIn Dispatch
-          <ExternalLink size={12} class="inline ml-1" />
-        </a>
+      <div class="space-y-4 max-h-[380px] overflow-y-auto pr-1 select-text">
+        {#if isLoadingLinkedIn}
+          <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 text-center text-[#e0a92e] font-mono text-xs">
+            CONNECTING TO DISPATCH LINK...
+          </div>
+        {:else if linkedinPosts.length === 0}
+          <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 text-center text-white/40 font-mono text-xs">
+            NO DISPATCH TRANSMISSIONS RECEIVED.
+          </div>
+        {:else}
+          {#each linkedinPosts as post}
+            <div class="bg-[#0f1115] border-2 border-[#3d3428] p-5 space-y-3 bebop-shadow font-mono">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-[#e0a92e] font-bold text-xs uppercase">{post.author}</h3>
+                  <p class="text-[9px] text-[#f3efe0]/40 uppercase mt-0.5">{post.role}</p>
+                </div>
+                <span class="text-[9px] text-white/30">{post.date}</span>
+              </div>
+              
+              <p class="text-[#f3efe0]/70 text-[11px] leading-relaxed">
+                {post.content}
+              </p>
+              
+              <div class="flex justify-between items-center pt-2 border-t border-[#3d3428]/40">
+                <div class="flex items-center gap-4 text-[9px] text-white/40">
+                  <span>LIKES: {post.likes}</span>
+                  <span>COMMENTS: {post.comments}</span>
+                </div>
+                
+                <a 
+                  href={post.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="btn-bebop text-[9px] py-1 px-3"
+                >
+                  VIEW DISPATCH
+                  <ExternalLink size={10} class="inline ml-1" />
+                </a>
+              </div>
+            </div>
+          {/each}
+        {/if}
       </div>
     </div>
 

@@ -24,4 +24,8 @@
 - [x] Configure high-DPI pixelRatio-aware WebGLRenderTarget to prevent card blurriness
 - [x] Create separate postScene & OrthographicCamera for 2D fullscreen water overlay quad
 - [x] Tune Ajarus shader parameters (frequency 45.0, emboss 0.055) for crisp, readable text and distinct water ripples
+- [x] Set depthTest: false and depthWrite: false on water material to prevent z-buffer clipping
+- [x] Set postCamera frustum clipping plane to -1 to 1 to prevent mesh clipping
+- [x] Create public/linkedin_posts.json to store dynamic social post data
+- [x] Refactor Bio.svelte to fetch and display LinkedIn posts dynamically on mount
 - [x] Verify everything compiles and builds successfully using Nix
