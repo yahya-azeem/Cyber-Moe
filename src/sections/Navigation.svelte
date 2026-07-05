@@ -31,7 +31,8 @@
 
   const navLinks = [
     { label: 'Services', href: '#services' },
-    { label: 'Pricing', href: '#pricing' },
+    { label: 'Capabilities', href: '#capabilities' },
+    { label: 'Subscription', href: '#pricing' },
     { label: 'Process', href: '#process' },
     { label: 'Contact', href: '#contact' },
   ];

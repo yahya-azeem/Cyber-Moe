@@ -129,8 +129,8 @@
       <div bind:this={imageRef} class="relative">
         <div class="relative aspect-[4/5] max-h-[65vh] border border-white/10 overflow-hidden rounded-sm group/img shadow-2xl">
           <img 
-            src="/consulting.jpg" 
-            alt="Consultation"
+            src="/about_me.png" 
+            alt="Muhammad Yahya Azeem"
             class="w-full h-full object-cover transition-transform duration-1000 group-hover/img:scale-110"
           />
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>

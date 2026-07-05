@@ -6,6 +6,7 @@
   import Hero from './sections/Hero.svelte';
   import ServicesOverview from './sections/ServicesOverview.svelte';
   import ServiceDetail from './sections/ServiceDetail.svelte';
+  import Resume from './sections/Resume.svelte';
   import Testimonial from './sections/Testimonial.svelte';
   import Process from './sections/Process.svelte';
   import Pricing from './sections/Pricing.svelte';
@@ -109,6 +110,9 @@
       image="vciso_laptop.jpg"
       layout="left"
     />
+    
+    <!-- Section 5.5: Capabilities & Resume -->
+    <Resume />
     
     <!-- Section 6: Testimonial -->
     <Testimonial />

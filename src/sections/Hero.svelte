@@ -113,6 +113,7 @@
 
   const scrollToServices = () => document.querySelector('#services')?.scrollIntoView({ behavior: 'smooth' });
   const scrollToPricing = () => document.querySelector('#pricing')?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToContact = () => document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' });
 </script>
 
 <section 
@@ -163,24 +164,24 @@
       bind:this={subheadRef}
       class="text-lg lg:text-xl text-white/70 max-w-[520px] mb-10 leading-relaxed font-light"
     >
-      CyberMoe helps early-stage teams protect data, meet compliance, and navigate 
-      geopolitical risk—without the enterprise overhead.
+      CyberMoe helps early-stage teams harden systems, meet compliance, and navigate 
+      geopolitical risk—backed by hands-on engineering capability and research.
     </p>
 
     <!-- CTAs -->
     <div bind:this={ctaRef} class="flex flex-col sm:flex-row gap-5">
       <button 
-        onclick={scrollToServices}
+        onclick={scrollToContact}
         class="btn-primary flex items-center justify-center gap-3 py-4 px-8 text-lg"
       >
-        Book a free call
+        Book a call
         <ArrowRight size={20} />
       </button>
       <button 
         onclick={scrollToPricing}
         class="px-8 py-4 text-white/80 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 border border-white/10 hover:border-white/20 rounded-md backdrop-blur-sm"
       >
-        See pricing
+        View subscription
         <ChevronDown size={20} />
       </button>
     </div>

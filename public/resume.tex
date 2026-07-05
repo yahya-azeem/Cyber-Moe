@@ -1,0 +1,125 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[left=0.5in,top=0.45in,right=0.5in,bottom=0.45in]{geometry}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{helvet}
+
+% Set font to Helvetica (sans-serif)
+\renewcommand{\familydefault}{\sfdefault}
+
+% Color definitions
+\definecolor{primary}{HTML}{1A365D}   % Deep navy for headings
+\definecolor{textdark}{HTML}{2D3748}  % Dark grey for body text
+\definecolor{accent}{HTML}{2B6CB0}    % Lighter blue for links/highlights
+
+\color{textdark}
+
+% Hyperlink configuration
+\hypersetup{
+    colorlinks=true,
+    linkcolor=accent,
+    urlcolor=accent,
+    pdftitle={Muhammad Yahya Azeem - Resume},
+    pdfauthor={Muhammad Yahya Azeem}
+}
+
+% Page style configuration
+\pagestyle{empty}
+
+% Section formatting
+\titleformat{\section}
+  {\color{primary}\normalfont\Large\bfseries}
+  {}{0em}
+  {}
+  [{\color{accent}\titlerule[1pt]\vspace{3pt}}]
+
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+
+% Global itemize settings
+\setlist[itemize]{leftmargin=*,noitemsep,topsep=2pt,parsep=1pt,partopsep=0pt,itemsep=2pt}
+
+% Custom commands
+\newcommand{\project}[4]{
+    \noindent\textbf{\href{#4}{\color{primary}#1}} \hfill \textit{#2} \\
+    \noindent\textit{Key Technologies: #3}
+}
+
+\newcommand{\achievement}[2]{
+    \noindent\textbf{\color{primary}#1} \hfill \textit{#2}
+}
+
+\begin{document}
+
+% ==================== HEADER ====================
+\begin{center}
+    {\Huge\bfseries\color{primary} Muhammad Yahya Azeem} \\
+    \vspace{3pt}
+    \small
+    Irving, Texas $\cdot$ +1 (945) 246-0159 $\cdot$ \href{mailto:yahyaazeem44@gmail.com}{yahyaazeem44@gmail.com} $\cdot$ \href{https://github.com/yahya-azeem}{github.com/yahya-azeem} \\
+    \vspace{2pt}
+    \href{https://www.linkedin.com/in/muhammad-azeem-474612357/}{linkedin.com/in/muhammad-azeem-474612357} $\cdot$ 
+    \href{https://profile.hackthebox.com/profile/019c6962-e472-7141-bfee-10910c4881e8}{HTB Profile}
+\end{center}
+
+\vspace{-4pt}
+
+% ==================== PROFILE ====================
+\section*{Professional Summary}
+Software and security researcher specializing in systems programming, emulation layers, machine learning optimization, and offensive security.
+
+% ==================== TECHNICAL SKILLS ====================
+\section*{Technical Skills}
+\noindent\textbf{Programming Languages:} Rust, C, C++, Python, TypeScript, Shell, Assembly. \\
+\noindent\textbf{Systems \& Architecture:} OS Kernel Development, Virtual Memory Management, Vulkan SDK, Systems Virtualization. \\
+\noindent\textbf{Deep Learning \& Optimization:} Transformer Architecture Design, Custom Optimizers, Quantization, PyTorch, NumPy. \\
+\noindent\textbf{Offensive Security:} Exploit Development, Kernel-level Exploitation, Reverse Engineering, Binary Analysis, Network Auditing.
+
+% ==================== EXPERIENCE ====================
+\section*{Professional Experience}
+\achievement{Cybervigilance LLC — Technology Risk Management \& Cybersecurity Intern}{Oct 2025 -- Present}
+\begin{itemize}
+    \item \textbf{GRC \& Risk Management:} Delivered 3 risk assessments and corporate presentations aligned with NIST frameworks and ISO 27001 standards for multi-million and billion-dollar entities.
+\end{itemize}
+
+% ==================== CYBERSECURITY ACHIEVEMENTS ====================
+\section*{Cybersecurity \& Offensive Capabilities}
+\achievement{Hack The Box (HTB) — Rooted ``Cobblestone'' Machine (Insane Difficulty)}{June 2026}
+\begin{itemize}
+    \item \textbf{Active Exploitation:} Compromised and rooted the machine in 3 days utilizing binary analysis and custom payload bypasses.
+\end{itemize}
+
+% ==================== PROJECTS ====================
+\section*{Projects}
+
+\project{ShadPS5 — PlayStation 5 Emulator}{June 2026}{Rust, Vulkan 1.3, SDL2, ash}{https://github.com/yahya-azeem/ShadPS5}
+\begin{itemize}
+    \item \textbf{ELF/SELF Loader \& Linker:} Designed the loader in Rust, translating 200+ Cryptographic Name Identifiers (NIDs) to initialize guest library imports.
+    \item \textbf{GPU Shader Translation:} Engineered a translation engine mapping 50+ guest shader instructions to host-native Vulkan SPIR-V bytecode to render 3D geometry.
+\end{itemize}
+
+\vspace{6pt}
+
+\project{Project Golf Ball — OpenAI Parameter Golf LLM Optimizer}{April 2026}{Python, PyTorch, CUDA}{https://github.com/yahya-azeem/Project-Golf-Ball}
+\begin{itemize}
+    \item \textbf{11-Layer Transformer Model:} Optimized an 11-layer language model (512-dim) trained on 100M+ FineWeb tokens to fit strictly within a 16MB artifact limit.
+\end{itemize}
+
+\vspace{6pt}
+
+\project{Polymarket Copytrade Bot}{May 2026}{Rust, Tokio, WebSockets, CLOB}{https://github.com/yahya-azeem/polymarket-copy-bot-rust}
+\begin{itemize}
+    \item \textbf{Asynchronous Copytrading Engine:} Developed a Rust/Tokio system to mirror Whale orders with sub-5ms latency, protecting capital with a 20\% daily drawdown threshold.
+\end{itemize}
+
+\vspace{6pt}
+\noindent\textbf{Other Projects:} \textbf{\href{https://github.com/yahya-azeem/Unixy-System}{\color{primary}Unixy-System}} (custom OS kernel in C/Assembly supporting x86/MIPS/PowerPC) $\cdot$ \textbf{\href{https://github.com/yahya-azeem/Protection-Valley}{\color{primary}Protection Valley}} (SvelteKit 5 e-commerce platform with a Vercel-deployed Rust serverless backend).
+
+% ==================== EDUCATION ====================
+\section*{Education}
+\noindent\textbf{\color{primary}The University of Texas at Dallas} \hfill \textit{2026 -- 2030} \\
+Bachelor of Science in Computer Science \hfill \textit{Richardson, Texas}
+
+\end{document}
