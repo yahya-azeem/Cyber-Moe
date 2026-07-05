@@ -1,17 +1,19 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { gsap } from 'gsap';
-  import { ExternalLink, GitCommit, Star, FolderGit } from 'lucide-svelte';
-  import { fetchPinnedRepos, fetchUserEvents, type GitHubRepo, type GitHubEvent } from '../lib/github';
+  import { ExternalLink, GitCommit, Code } from 'lucide-svelte';
+  import { parseResume, type ResumeData } from '../lib/resumeParser';
+  import { fetchUserEvents, type GitHubEvent } from '../lib/github';
 
   let containerRef = $state<HTMLDivElement>();
-  let pinnedRepos = $state<GitHubRepo[]>([]);
+  let resumeData = $state<ResumeData | null>(null);
   let events = $state<GitHubEvent[]>([]);
-  let isLoadingRepos = $state(true);
+  let isLoading = $state(true);
   let isLoadingEvents = $state(true);
 
   const baseUrl = import.meta.env.BASE_URL || '/';
   const aboutMeImg = `${baseUrl}about_me.png`;
+  const resumeUrl = `${baseUrl}resume.tex`;
 
   onMount(() => {
     // Entrance animations
@@ -22,14 +24,18 @@
       );
     }, containerRef);
 
-    // Fetch GitHub APIs in IIFE
+    // Fetch dynamic content in IIFE
     (async () => {
       try {
-        pinnedRepos = await fetchPinnedRepos();
-        isLoadingRepos = false;
+        const response = await fetch(resumeUrl);
+        if (response.ok) {
+          const texText = await response.text();
+          resumeData = parseResume(texText);
+        }
+        isLoading = false;
       } catch (e) {
         console.error(e);
-        isLoadingRepos = false;
+        isLoading = false;
       }
 
       try {
@@ -71,15 +77,10 @@
 </script>
 
 <div bind:this={containerRef} class="py-12 lg:py-20 max-w-[1200px] mx-auto px-6">
-  <!-- Retro Bebop Header Banner -->
-  <div class="retro-animate bg-[#a8201a] text-[#f3efe0] font-mono text-xs font-semibold px-4 py-2 uppercase tracking-[0.3em] mb-12 flex justify-between items-center border border-[#a8201a] bebop-shadow">
-    <span>SYSTEM LOGS: ACTIVE // PINNED SOURCE FILES LOADED</span>
-    <span class="hidden md:inline">SESSION #01 // "3, 2, 1, LET'S JAM!"</span>
-  </div>
-
+  
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
     
-    <!-- Left Area - Pinned Projects (Span 7) -->
+    <!-- Left Area - Resume Projects (Span 7) -->
     <div class="lg:col-span-7 space-y-8">
       <div class="retro-animate flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div class="flex items-center gap-3">
@@ -96,30 +97,30 @@
         </button>
       </div>
 
-      <!-- Pinned Repos Grid/List -->
+      <!-- Projects from Resume -->
       <div class="space-y-6">
-        {#if isLoadingRepos}
+        {#if isLoading}
           <div class="py-20 text-center bg-[#0f1115] border-2 border-[#3d3428] font-mono text-xs text-white/40">
-            <span class="inline-block animate-pulse">QUERYING PINNED CODE BASES...</span>
+            <span class="inline-block animate-pulse">QUERYING RESUME PROJECTS...</span>
           </div>
-        {:else if pinnedRepos.length === 0}
+        {:else if !resumeData || resumeData.projects.length === 0}
           <div class="py-12 text-center bg-[#0f1115] border-2 border-[#3d3428] font-mono text-xs text-white/40">
-            <span>NO PINNED ARCHIVES RETURNED</span>
+            <span>NO RESUME PROJECTS RETURNED</span>
           </div>
         {:else}
-          {#each pinnedRepos as repo}
+          {#each resumeData.projects as project}
             <div class="bebop-card p-6 flex flex-col justify-between relative group retro-animate">
-              <div class="space-y-4">
-                <div class="flex justify-between items-start">
+              <div class="absolute top-0 left-0 w-1 h-full bg-[#e0a92e]/20 group-hover:bg-[#e0a92e] transition-colors"></div>
+              
+              <div class="space-y-4 pl-2">
+                <div class="flex justify-between items-start gap-4">
                   <span class="font-mono text-[9px] text-[#a8201a] uppercase font-bold tracking-wider">
-                    // {repo.language || 'SYSTEMS'}
+                    // KEY TECHNOLOGIES: {project.tech}
                   </span>
                   <div class="flex items-center gap-3">
-                    <span class="font-mono text-[10px] text-[#e0a92e] flex items-center gap-1">
-                      <Star size={10} class="text-[#e0a92e]" /> {repo.stargazers_count}
-                    </span>
+                    <span class="text-[#e0a92e] text-xs font-mono hidden sm:inline">{project.date}</span>
                     <a 
-                      href={repo.html_url} 
+                      href={project.url} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       class="text-white/40 hover:text-white transition-colors"
@@ -129,20 +130,51 @@
                     </a>
                   </div>
                 </div>
+                
                 <h3 class="font-display font-bold text-xl uppercase tracking-tight text-white group-hover:text-[#e0a92e] transition-colors">
-                  {repo.name}
+                  {project.title}
                 </h3>
-                <p class="text-white/60 text-xs font-light leading-relaxed">
-                  {repo.description || 'Systems programming codebase and active research repository.'}
-                </p>
+                
+                <ul class="space-y-2 text-[#f3efe0]/70 text-xs font-light leading-relaxed list-disc pl-4">
+                  {#each project.bullets as bullet}
+                    <li>{bullet}</li>
+                  {/each}
+                </ul>
               </div>
             </div>
           {/each}
+          
+          <!-- Render Other Projects in inline listing -->
+          {#if resumeData.otherProjects && resumeData.otherProjects.length > 0}
+            <div class="bg-[#0f1115]/40 border-2 border-[#3d3428] p-6 tab-item-card transition-all retro-animate">
+              <h4 class="font-mono text-xs text-[#e0a92e] uppercase tracking-[0.2em] mb-4 border-b border-[#3d3428] pb-2">
+                Additional Repositories
+              </h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {#each resumeData.otherProjects as other}
+                  <a 
+                    href={other.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="flex items-center justify-between p-4 bg-black border border-[#3d3428] hover:border-[#e0a92e] group transition-all"
+                  >
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-[#e0a92e]/5 border border-[#3d3428] flex items-center justify-center group-hover:bg-[#e0a92e]/20 transition-colors">
+                        <Code size={14} class="text-[#e0a92e]" />
+                      </div>
+                      <span class="text-white/70 group-hover:text-white font-mono text-sm transition-colors">{other.title}</span>
+                    </div>
+                    <ExternalLink size={14} class="text-white/30 group-hover:text-white transition-colors" />
+                  </a>
+                {/each}
+              </div>
+            </div>
+          {/if}
         {/if}
       </div>
     </div>
 
-    <!-- Right Area - Profile Picture & Quick Contacts (Span 5) -->
+    <!-- Right Area - Picture & Contacts (Span 5) -->
     <div class="lg:col-span-5 space-y-8">
       
       <!-- Styled Avatar Card -->
