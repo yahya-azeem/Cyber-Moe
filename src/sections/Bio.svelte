@@ -705,7 +705,7 @@
       <img 
         src="https://media.giphy.com/media/l41YamEiIYltJtLUI/giphy.gif" 
         alt="Orbital Decay Feed" 
-        class="w-full h-auto block opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+        class="w-full h-auto block"
       />
       <!-- Scanning lines overlay -->
       <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
@@ -718,7 +718,7 @@
       <img 
         src="https://media.giphy.com/media/vKl91cZC6YKJD9w8ke/giphy.gif" 
         alt="Interstellar Decay Mapping" 
-        class="w-full h-auto block opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+        class="w-full h-auto block"
       />
       <!-- Scanning lines overlay -->
       <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>

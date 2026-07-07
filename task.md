@@ -35,4 +35,5 @@
 - [x] Remove section header and text descriptions from Giphy GIF panels
 - [x] Scale Giphy outline borders to match the exact size of the GIFs directly
 - [x] Remove aspect locks and object cropping to support proportional heights on vertical GIFs
+- [x] Remove hover opacity fade-in/fade-out transitions to show Giphy GIFs at full brightness
 - [x] Verify everything compiles and builds successfully using Nix
