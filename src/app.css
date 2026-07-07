@@ -27,7 +27,7 @@
   body {
     background-color: #0b0c10;
     color: #f3efe0;
-    font-family: 'Tahoma', sans-serif;
+    font-family: 'Times New Roman', Times, serif;
     background-image: 
       radial-gradient(rgba(224, 169, 46, 0.02) 1px, transparent 1px),
       radial-gradient(rgba(168, 32, 26, 0.01) 1px, transparent 1px);
@@ -38,11 +38,11 @@
 
 /* Typography styles */
 .font-display {
-  font-family: 'Tahoma', sans-serif;
+  font-family: 'Times New Roman', Times, serif;
 }
 
 .font-mono {
-  font-family: 'Tahoma', sans-serif;
+  font-family: 'Times New Roman', Times, serif;
 }
 
 /* Dotted pixel style font for headings */
@@ -128,7 +128,7 @@
 .btn-bebop {
   background-color: #e0a92e;
   color: #0b0c10;
-  font-family: 'Tahoma', sans-serif;
+  font-family: 'Times New Roman', Times, serif;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -146,7 +146,7 @@
 .btn-bebop-red {
   background-color: #a8201a;
   color: #f3efe0;
-  font-family: 'Tahoma', sans-serif;
+  font-family: 'Times New Roman', Times, serif;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.15em;
