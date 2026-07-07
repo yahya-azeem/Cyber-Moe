@@ -626,18 +626,6 @@
         </div>
       </div>
       
-      <!-- Telemetry Visualizer: Orbital Decay Feed -->
-      <div class="retro-animate border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[380px] mx-auto">
-        <img 
-          src={`${baseUrl}visual_decay.gif`} 
-          alt="Orbital Decay Feed" 
-          class="w-full h-auto block"
-          onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/visual_decay.gif'; }}
-        />
-        <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-        <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-      </div>
-
     </div>
 
   </div>
@@ -670,6 +658,18 @@
             {/each}
           </ul>
         {/if}
+
+        <!-- Embedded local visual_decay GIF -->
+        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full mt-4">
+          <img 
+            src={`${baseUrl}visual_decay.gif`} 
+            alt="Orbital Decay Feed" 
+            class="w-full h-auto block"
+            onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/visual_decay.gif'; }}
+          />
+          <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+          <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]"></div>
+        </div>
       </div>
     </div>
 
@@ -681,6 +681,18 @@
       </div>
 
       <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 text-center space-y-5 bebop-shadow font-mono">
+        <!-- Embedded local signal_loop GIF -->
+        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full">
+          <img 
+            src={`${baseUrl}signal_loop.gif`} 
+            alt="Interstellar Decay Mapping" 
+            class="w-full h-auto block"
+            onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/signal_loop.gif'; }}
+          />
+          <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+          <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]"></div>
+        </div>
+
         <p class="text-[#f3efe0]/70 text-xs leading-relaxed">
           Access systems R&D updates, vulnerability analysis reports, and research dispatches directly on my LinkedIn activity feed.
         </p>
@@ -696,25 +708,6 @@
       </div>
     </div>
 
-  </div>
-</div>
-
-<!-- CRT Panel for Visual Feeds -->
-<div class="relative w-full border-t-2 border-[#3d3428] bg-[#050608] py-16 px-6 select-none">
-  <div class="max-w-[1200px] mx-auto flex justify-center">
-    <!-- GIF 2 Panel -->
-    <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[500px]">
-      <img 
-        src={`${baseUrl}signal_loop.gif`} 
-        alt="Interstellar Decay Mapping" 
-        class="w-full h-auto block"
-        onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/signal_loop.gif'; }}
-      />
-      <!-- Scanning lines overlay -->
-      <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-      <!-- Retro CRT Vignette -->
-      <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-    </div>
   </div>
 </div>
 
