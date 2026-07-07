@@ -32,4 +32,6 @@
 - [x] Add touch events (`touchstart`, `touchmove`) to the Black Hole Singularity Monitor
 - [x] Correct Black Hole shader aspect ratio for mobile viewports using maxDim factor
 - [x] Append Bebop CRT paneled visual feeds with the two requested Giphy GIFs below the black hole section
+- [x] Remove section header and text descriptions from Giphy GIF panels
+- [x] Scale Giphy outline borders to match the exact size of the GIFs directly
 - [x] Verify everything compiles and builds successfully using Nix

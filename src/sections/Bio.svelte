@@ -699,88 +699,33 @@
 
 <!-- CRT Panel for Visual Feeds -->
 <div class="relative w-full border-t-2 border-[#3d3428] bg-[#050608] py-16 px-6 select-none">
-  <div class="max-w-[1200px] mx-auto space-y-10">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-[#3d3428] pb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-0.5 bg-[#a8201a]"></div>
-        <h2 class="font-dots text-xl text-[#a8201a] uppercase tracking-wider">HYPER-FREQUENCY VISUALIZERS</h2>
-      </div>
-      <span class="font-mono text-[10px] text-white/30 uppercase mt-2 md:mt-0">// SYSTEM OVERLAY FEED REGISTER // ACTIVE_DECAY</span>
-    </div>
-
+  <div class="max-w-[1200px] mx-auto">
     <!-- 2 Column Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <!-- GIF 1 Panel -->
-      <div class="bg-[#0f1115] border-2 border-[#e0a92e] p-4 flex flex-col justify-between relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a]">
-        <!-- Top status bar -->
-        <div class="flex justify-between items-center text-[10px] font-mono text-[#e0a92e] border-b border-[#3d3428]/40 pb-2 mb-4">
-          <span class="flex items-center gap-2">
-            <span class="w-1.5 h-1.5 bg-[#e0a92e] rounded-full animate-pulse"></span>
-            FEED: ACTIVE // PORT_404
-          </span>
-          <span class="text-white/40">SCANNING_FREQUENCY: 44.2Hz</span>
-        </div>
-
-        <!-- Image Container with Scanlines Overlay -->
-        <div class="relative w-full aspect-video bg-black overflow-hidden border border-[#3d3428]/60 flex items-center justify-center">
-          <img 
-            src="https://media.giphy.com/media/l41YamEiIYltJtLUI/giphy.gif" 
-            alt="Orbital Decay Feed" 
-            class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-          />
-          <!-- Scanning lines overlay -->
-          <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-          <!-- Retro CRT Vignette -->
-          <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-        </div>
-
-        <!-- Info Description -->
-        <div class="mt-4 font-mono space-y-2">
-          <div class="flex justify-between items-center">
-            <h3 class="text-[#e0a92e] text-xs font-bold uppercase tracking-wider">ORBITAL DRIFT MONITOR</h3>
-            <span class="text-[9px] text-[#a8201a]">SYS_REG // 0xAF09</span>
-          </div>
-          <p class="text-white/60 text-[10px] leading-relaxed">
-            Real-time feed output mapping low-orbit satellite drift and warp gate decay parameters. Scanning vector aligned with Jupiter gateway coordinates.
-          </p>
-        </div>
+      <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black aspect-video flex items-center justify-center">
+        <img 
+          src="https://media.giphy.com/media/l41YamEiIYltJtLUI/giphy.gif" 
+          alt="Orbital Decay Feed" 
+          class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+        />
+        <!-- Scanning lines overlay -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+        <!-- Retro CRT Vignette -->
+        <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
       </div>
 
       <!-- GIF 2 Panel -->
-      <div class="bg-[#0f1115] border-2 border-[#e0a92e] p-4 flex flex-col justify-between relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a]">
-        <!-- Top status bar -->
-        <div class="flex justify-between items-center text-[10px] font-mono text-[#e0a92e] border-b border-[#3d3428]/40 pb-2 mb-4">
-          <span class="flex items-center gap-2">
-            <span class="w-1.5 h-1.5 bg-[#e0a92e] rounded-full animate-pulse"></span>
-            FEED: ACTIVE // PORT_512
-          </span>
-          <span class="text-white/40">TRANS_RATE: 120kbps</span>
-        </div>
-
-        <!-- Image Container with Scanlines Overlay -->
-        <div class="relative w-full aspect-video bg-black overflow-hidden border border-[#3d3428]/60 flex items-center justify-center">
-          <img 
-            src="https://media.giphy.com/media/vKl91cZC6YKJD9w8ke/giphy.gif" 
-            alt="Interstellar Decay Mapping" 
-            class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-          />
-          <!-- Scanning lines overlay -->
-          <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-          <!-- Retro CRT Vignette -->
-          <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-        </div>
-
-        <!-- Info Description -->
-        <div class="mt-4 font-mono space-y-2">
-          <div class="flex justify-between items-center">
-            <h3 class="text-[#e0a92e] text-xs font-bold uppercase tracking-wider">HYPER-SPACE SIGNAL LOOP</h3>
-            <span class="text-[9px] text-[#a8201a]">SYS_REG // 0xB312</span>
-          </div>
-          <p class="text-white/60 text-[10px] leading-relaxed">
-            Visual output feedback loop registering hyperspace transition fluctuations and signal replication drift. Decrypted via Bebop central relay matrix.
-          </p>
-        </div>
+      <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black aspect-video flex items-center justify-center">
+        <img 
+          src="https://media.giphy.com/media/vKl91cZC6YKJD9w8ke/giphy.gif" 
+          alt="Interstellar Decay Mapping" 
+          class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+        />
+        <!-- Scanning lines overlay -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+        <!-- Retro CRT Vignette -->
+        <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
       </div>
     </div>
   </div>
