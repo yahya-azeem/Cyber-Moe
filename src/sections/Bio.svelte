@@ -511,9 +511,8 @@
         {:else}
           {#each resumeData.projects as project}
             <div class="bebop-card p-6 flex flex-col justify-between relative group retro-animate">
-              <div class="absolute top-0 left-0 w-1 h-full bg-[#e0a92e]/20 group-hover:bg-[#e0a92e] transition-colors"></div>
               
-              <div class="space-y-4 pl-2">
+              <div class="space-y-4">
                 <div class="flex justify-between items-start gap-4">
                   <span class="font-mono text-[9px] text-[#a8201a] uppercase font-bold tracking-wider">
                     // KEY TECHNOLOGIES: {project.tech}
