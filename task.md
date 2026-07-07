@@ -47,4 +47,7 @@
 - [x] Move Giphy GIFs outside of the feed cards to eliminate unused empty space within the cards
 - [x] Configure DotGothic16 globally as the primary typography and layout font family
 - [x] Completely remove Capabilities tab, routing, navigation elements, and delete Resume.svelte
+- [x] Re-order grid columns so the avatar/operator directory stacks first on mobile viewports
+- [x] Set responsive heights (`h-[45vh] sm:h-[70vh]`) for the Black Hole Singularity monitor canvas
+- [x] Remove dead Capabilities dispatch button from the Bio header block
 - [x] Verify everything compiles and builds successfully using Nix

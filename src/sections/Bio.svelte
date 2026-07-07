@@ -128,10 +128,7 @@
     };
   });
 
-  const dispatch = (tabName: string) => {
-    const event = new CustomEvent('switchtab', { detail: tabName });
-    window.dispatchEvent(event);
-  };
+
 
   // Helper to format event names into readable Bebop logs
   function formatBebopEvent(event: GitHubEvent): string {
@@ -481,8 +478,7 @@
   
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start relative z-10">
     
-    <!-- Left Area - Resume Projects (Span 7) -->
-    <div class="lg:col-span-7 space-y-8">
+    <div class="lg:col-span-7 space-y-8 order-2 lg:order-1">
       <div class="retro-animate flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div class="flex items-center gap-3">
           <div class="w-8 h-0.5 bg-[#e0a92e]"></div>
@@ -490,12 +486,6 @@
             About me
           </h1>
         </div>
-        <button 
-          onclick={() => dispatch('resume')} 
-          class="text-xs font-mono text-[#e0a92e] hover:underline uppercase text-left sm:text-right"
-        >
-          View Full Capabilities →
-        </button>
       </div>
 
       <!-- Projects from Resume -->
@@ -615,7 +605,7 @@
     </div>
 
     <!-- Right Area - Picture & Contacts (Span 5) -->
-    <div class="lg:col-span-5 space-y-8">
+    <div class="lg:col-span-5 space-y-8 order-1 lg:order-2">
       
       <!-- Styled Avatar Card -->
       <div class="retro-animate relative group flex justify-center">
@@ -721,7 +711,7 @@
 </div>
 
 <!-- Black Hole Accretion Disk Shader Section (Singularity Monitor) -->
-<div class="relative w-full h-[70vh] border-t-2 border-[#3d3428] bg-black overflow-hidden select-none">
+<div class="relative w-full h-[45vh] sm:h-[70vh] border-t-2 border-[#3d3428] bg-black overflow-hidden select-none">
   <div class="absolute top-6 left-6 z-10 font-dots text-[#e0a92e] text-sm uppercase tracking-widest flex items-center gap-3 bg-black/60 p-3 border border-[#3d3428]">
     <div class="w-3 h-3 bg-[#e0a92e] animate-ping rounded-full"></div>
     SINGULARITY DISPATCH MONITOR // SES-02
