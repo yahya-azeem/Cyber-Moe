@@ -45,5 +45,6 @@
 - [x] Reduce maximum widths (`max-w`) of visual_decay, signal_loop, and visual_system to compact, elegant sizes
 - [x] Remove thick horizontal section divider and pull the bottom grid up (`mt-6`) to reduce vertical spacing
 - [x] Move Giphy GIFs outside of the feed cards to eliminate unused empty space within the cards
-- [x] Configure Times New Roman as primary layout and 3D canvas font family (except for DotGothic16 headings)
+- [x] Configure DotGothic16 globally as the primary typography and layout font family
+- [x] Completely remove Capabilities tab, routing, navigation elements, and delete Resume.svelte
 - [x] Verify everything compiles and builds successfully using Nix
