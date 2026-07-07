@@ -29,4 +29,7 @@
 - [x] Set waterMesh.frustumCulled = false to prevent frustum culling on resize
 - [x] Add interactive Black Hole accretion disk raymarching shader at the bottom of Bio.svelte
 - [x] Replace dynamic posts query with a simple redirect button to LinkedIn posts activity feed
+- [x] Add touch events (`touchstart`, `touchmove`) to the Black Hole Singularity Monitor
+- [x] Correct Black Hole shader aspect ratio for mobile viewports using maxDim factor
+- [x] Append Bebop CRT paneled visual feeds with the two requested Giphy GIFs below the black hole section
 - [x] Verify everything compiles and builds successfully using Nix
