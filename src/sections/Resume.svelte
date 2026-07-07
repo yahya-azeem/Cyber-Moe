@@ -194,7 +194,7 @@
     if (type === 'experience') headerText = 'EXPERIENCE (SCROLLABLE)';
 
     ctx.fillStyle = '#e0a92e';
-    ctx.font = 'bold 44px Courier, monospace';
+    ctx.font = 'bold 44px Tahoma, sans-serif';
     ctx.fillText(headerText.toUpperCase(), 50, 95);
 
     // Clip rendering window to keep text inside boundary
@@ -207,17 +207,17 @@
 
     if (type === 'profile') {
       ctx.fillStyle = '#a8201a';
-      ctx.font = 'bold 50px Courier, monospace';
+      ctx.font = 'bold 50px Tahoma, sans-serif';
       ctx.fillText(data.contact.name.toUpperCase(), 50, y);
       y += 60;
 
       ctx.fillStyle = '#e0a92e';
-      ctx.font = '28px Courier, monospace';
+      ctx.font = '28px Tahoma, sans-serif';
       ctx.fillText('SECURITY RESEARCHER & SYSTEMS ENGINEER', 50, y);
       y += 70;
 
       ctx.fillStyle = '#f3efe0';
-      ctx.font = '28px Courier, monospace';
+      ctx.font = '28px Tahoma, sans-serif';
       ctx.fillText(`LOCATION: ${data.contact.location}`, 50, y);
       y += 45;
       ctx.fillText(`EMAIL:    ${data.contact.email}`, 50, y);
@@ -228,12 +228,12 @@
       y += 80;
 
       ctx.fillStyle = '#e0a92e';
-      ctx.font = 'bold 32px Courier, monospace';
+      ctx.font = 'bold 32px Tahoma, sans-serif';
       ctx.fillText('// SUMMARY', 50, y);
       y += 50;
 
       ctx.fillStyle = '#f3efe0';
-      ctx.font = '28px Courier, monospace';
+      ctx.font = '28px Tahoma, sans-serif';
       const summaryText = data.summary;
       const words = summaryText.split(' ');
       let line = '';
@@ -254,16 +254,16 @@
       if (data.achievements && data.achievements.length > 0) {
         data.achievements.forEach(ach => {
           ctx.fillStyle = '#a8201a';
-          ctx.font = 'bold 36px Courier, monospace';
+          ctx.font = 'bold 36px Tahoma, sans-serif';
           ctx.fillText(ach.title.toUpperCase(), 50, y);
           ctx.fillStyle = 'rgba(243, 239, 224, 0.4)';
-          ctx.font = '22px Courier, monospace';
+          ctx.font = '22px Tahoma, sans-serif';
           ctx.fillText(ach.date, canvas.width - 240, y);
           
           y += 60;
 
           ctx.fillStyle = '#f3efe0';
-          ctx.font = '28px Courier, monospace';
+          ctx.font = '28px Tahoma, sans-serif';
           ach.bullets.forEach(bullet => {
             const words = bullet.split(' ');
             let line = ' • ';
@@ -284,26 +284,26 @@
           
           y += 35;
           ctx.fillStyle = '#e0a92e';
-          ctx.font = 'italic 22px Courier, monospace';
+          ctx.font = 'italic 22px Tahoma, sans-serif';
           ctx.fillText('HTB Profile: hackthebox.com/users/yahya-azeem', 50, y);
           y += 70;
         });
       }
     } else if (type === 'education') {
       ctx.fillStyle = '#a8201a';
-      ctx.font = 'bold 36px Courier, monospace';
+      ctx.font = 'bold 36px Tahoma, sans-serif';
       ctx.fillText(data.education.school.toUpperCase(), 50, y);
       ctx.fillStyle = 'rgba(243, 239, 224, 0.4)';
-      ctx.font = '22px Courier, monospace';
+      ctx.font = '22px Tahoma, sans-serif';
       ctx.fillText(data.education.date, canvas.width - 220, y);
 
       y += 65;
       ctx.fillStyle = '#e0a92e';
-      ctx.font = '28px Courier, monospace';
+      ctx.font = '28px Tahoma, sans-serif';
       ctx.fillText(data.education.degree, 50, y);
       y += 45;
       ctx.fillStyle = '#f3efe0';
-      ctx.font = '28px Courier, monospace';
+      ctx.font = '28px Tahoma, sans-serif';
       ctx.fillText(`LOCATION: ${data.education.location}`, 50, y);
       y += 50;
     } else if (type === 'skills') {
@@ -316,12 +316,12 @@
 
       skillsCategories.forEach(cat => {
         ctx.fillStyle = '#a8201a';
-        ctx.font = 'bold 36px Courier, monospace';
+        ctx.font = 'bold 36px Tahoma, sans-serif';
         ctx.fillText(`> ${cat.label.toUpperCase()}`, 50, y);
         y += 50;
 
         ctx.fillStyle = '#f3efe0';
-        ctx.font = '28px Courier, monospace';
+        ctx.font = '28px Tahoma, sans-serif';
 
         const text = cat.items.join(', ');
         const words = text.split(' ');
@@ -343,21 +343,21 @@
     } else if (type === 'projects') {
       data.projects.forEach(project => {
         ctx.fillStyle = '#a8201a';
-        ctx.font = 'bold 36px Courier, monospace';
+        ctx.font = 'bold 36px Tahoma, sans-serif';
         ctx.fillText(`[ ${project.title.toUpperCase()} ]`, 50, y);
         
         ctx.fillStyle = '#e0a92e';
-        ctx.font = 'italic 24px Courier, monospace';
+        ctx.font = 'italic 24px Tahoma, sans-serif';
         ctx.fillText(`Tech: { ${project.tech} }`, 50, y + 30);
         
         ctx.fillStyle = 'rgba(243, 239, 224, 0.4)';
-        ctx.font = '22px Courier, monospace';
+        ctx.font = '22px Tahoma, sans-serif';
         ctx.fillText(project.date, canvas.width - 240, y);
         
         y += 80;
 
         ctx.fillStyle = '#f3efe0';
-        ctx.font = '26px Courier, monospace';
+        ctx.font = '26px Tahoma, sans-serif';
         project.bullets.forEach(bullet => {
           const words = bullet.split(' ');
           let line = '  • ';
@@ -381,17 +381,17 @@
 
       if (data.otherProjects && data.otherProjects.length > 0) {
         ctx.fillStyle = '#e0a92e';
-        ctx.font = 'bold 36px Courier, monospace';
+        ctx.font = 'bold 36px Tahoma, sans-serif';
         ctx.fillText(`// ADDITIONAL CODE BASES`, 50, y);
         y += 60;
 
         data.otherProjects.forEach(other => {
           ctx.fillStyle = '#f3efe0';
-          ctx.font = '26px Courier, monospace';
+          ctx.font = '26px Tahoma, sans-serif';
           ctx.fillText(`• ${other.title}`, 60, y);
           
           ctx.fillStyle = 'rgba(224, 169, 46, 0.6)';
-          ctx.font = '22px Courier, monospace';
+          ctx.font = '22px Tahoma, sans-serif';
           ctx.fillText(other.url, 85, y + 30);
           
           y += 70;
@@ -400,21 +400,21 @@
     } else if (type === 'experience') {
       data.experience.forEach(job => {
         ctx.fillStyle = '#a8201a';
-        ctx.font = 'bold 36px Courier, monospace';
+        ctx.font = 'bold 36px Tahoma, sans-serif';
         ctx.fillText(`// ${job.role.toUpperCase()}`, 50, y);
 
         ctx.fillStyle = '#e0a92e';
-        ctx.font = '24px Courier, monospace';
+        ctx.font = '24px Tahoma, sans-serif';
         ctx.fillText(`${job.company}`, 50, y + 30);
 
         ctx.fillStyle = 'rgba(243, 239, 224, 0.4)';
-        ctx.font = '22px Courier, monospace';
+        ctx.font = '22px Tahoma, sans-serif';
         ctx.fillText(job.date, canvas.width - 240, y);
 
         y += 80;
 
         ctx.fillStyle = '#f3efe0';
-        ctx.font = '26px Courier, monospace';
+        ctx.font = '26px Tahoma, sans-serif';
         job.bullets.forEach(bullet => {
           const words = bullet.split(' ');
           let line = '  • ';
