@@ -572,6 +572,46 @@
           {/if}
         {/if}
       </div>
+
+      <!-- Live Activity Feed -->
+      <div class="retro-animate space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-0.5 bg-[#a8201a]"></div>
+          <h2 class="font-dots text-xl text-[#a8201a] uppercase tracking-wider">Live signal feed</h2>
+        </div>
+
+        <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 space-y-4 bebop-shadow-red font-mono text-xs">
+          {#if isLoadingEvents}
+            <p class="text-white/30 animate-pulse">// BUFFERING LIVE TRANSMISSIONS...</p>
+          {:else if events.length === 0}
+            <p class="text-white/30">// NO LIVE EVENTS IN BUFFER REGISTERED</p>
+          {:else}
+            <ul class="space-y-4">
+              {#each events as event}
+                <li class="border-b border-[#3d3428]/35 pb-2 last:border-b-0 last:pb-0 space-y-1">
+                  <div class="flex items-center gap-2 text-[#e0a92e]">
+                    <GitCommit size={12} />
+                    <span class="font-bold text-[10px]">{event.type.replace('Event', '')}</span>
+                  </div>
+                  <p class="text-white/70 tracking-wide">{formatBebopEvent(event)}</p>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </div>
+
+        <!-- Embedded local visual_decay GIF -->
+        <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[280px] mx-auto mt-4">
+          <img 
+            src={`${baseUrl}visual_decay.gif`} 
+            alt="Orbital Decay Feed" 
+            class="w-full h-auto block"
+            onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/visual_decay.gif'; }}
+          />
+          <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+          <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Right Area - Picture & Contacts (Span 5) -->
@@ -640,63 +680,30 @@
         <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
       </div>
 
-    </div>
-
-  </div>
-
-  <!-- Bottom Grid: Feed & LinkedIn -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-6">
-    
-    <!-- Left Area: Live Activity Feed (Span 7) -->
-    <div class="lg:col-span-7 space-y-4">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-0.5 bg-[#a8201a]"></div>
-        <h2 class="font-dots text-xl text-[#a8201a] uppercase tracking-wider">Live signal feed</h2>
-      </div>
-
-      <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 space-y-4 bebop-shadow-red font-mono text-xs">
-        {#if isLoadingEvents}
-          <p class="text-white/30 animate-pulse">// BUFFERING LIVE TRANSMISSIONS...</p>
-        {:else if events.length === 0}
-          <p class="text-white/30">// NO LIVE EVENTS IN BUFFER REGISTERED</p>
-        {:else}
-          <ul class="space-y-4">
-            {#each events as event}
-              <li class="border-b border-[#3d3428]/35 pb-2 last:border-b-0 last:pb-0 space-y-1">
-                <div class="flex items-center gap-2 text-[#e0a92e]">
-                  <GitCommit size={12} />
-                  <span class="font-bold text-[10px]">{event.type.replace('Event', '')}</span>
-                </div>
-                <p class="text-white/70 tracking-wide">{formatBebopEvent(event)}</p>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-
-        <!-- Embedded local visual_decay GIF -->
-        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full max-w-[280px] mx-auto mt-4">
-          <img 
-            src={`${baseUrl}visual_decay.gif`} 
-            alt="Orbital Decay Feed" 
-            class="w-full h-auto block"
-            onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/visual_decay.gif'; }}
-          />
-          <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-          <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]"></div>
+      <!-- Social Feed -->
+      <div class="retro-animate space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-0.5 bg-[#e0a92e]"></div>
+          <h2 class="font-dots text-xl text-[#e0a92e] uppercase tracking-wider">Social Feed</h2>
         </div>
-      </div>
-    </div>
 
-    <!-- Right Area: LinkedIn Dispatch Link (Span 5) -->
-    <div class="lg:col-span-5 space-y-4">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-0.5 bg-[#e0a92e]"></div>
-        <h2 class="font-dots text-xl text-[#e0a92e] uppercase tracking-wider">Social Feed</h2>
-      </div>
+        <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 text-center space-y-5 bebop-shadow font-mono">
+          <p class="text-[#f3efe0]/70 text-xs leading-relaxed">
+            Access systems R&D updates, vulnerability analysis reports, and research dispatches directly on my LinkedIn activity feed.
+          </p>
+          <a 
+            href="https://www.linkedin.com/in/muhammad-azeem-474612357/detail/recent-activity/shares/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            class="btn-bebop w-full block py-2.5 text-xs uppercase"
+          >
+            Open LinkedIn Dispatch
+            <ExternalLink size={12} class="inline ml-1" />
+          </a>
+        </div>
 
-      <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 text-center space-y-5 bebop-shadow font-mono">
         <!-- Embedded local signal_loop GIF -->
-        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full max-w-[260px] mx-auto">
+        <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[260px] mx-auto">
           <img 
             src={`${baseUrl}signal_loop.gif`} 
             alt="Interstellar Decay Mapping" 
@@ -706,20 +713,8 @@
           <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
           <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]"></div>
         </div>
-
-        <p class="text-[#f3efe0]/70 text-xs leading-relaxed">
-          Access systems R&D updates, vulnerability analysis reports, and research dispatches directly on my LinkedIn activity feed.
-        </p>
-        <a 
-          href="https://www.linkedin.com/in/muhammad-azeem-474612357/detail/recent-activity/shares/" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          class="btn-bebop w-full block py-2.5 text-xs uppercase"
-        >
-          Open LinkedIn Dispatch
-          <ExternalLink size={12} class="inline ml-1" />
-        </a>
       </div>
+
     </div>
 
   </div>
