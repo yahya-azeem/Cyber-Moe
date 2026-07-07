@@ -34,4 +34,5 @@
 - [x] Append Bebop CRT paneled visual feeds with the two requested Giphy GIFs below the black hole section
 - [x] Remove section header and text descriptions from Giphy GIF panels
 - [x] Scale Giphy outline borders to match the exact size of the GIFs directly
+- [x] Remove aspect locks and object cropping to support proportional heights on vertical GIFs
 - [x] Verify everything compiles and builds successfully using Nix

@@ -699,34 +699,31 @@
 
 <!-- CRT Panel for Visual Feeds -->
 <div class="relative w-full border-t-2 border-[#3d3428] bg-[#050608] py-16 px-6 select-none">
-  <div class="max-w-[1200px] mx-auto">
-    <!-- 2 Column Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- GIF 1 Panel -->
-      <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black aspect-video flex items-center justify-center">
-        <img 
-          src="https://media.giphy.com/media/l41YamEiIYltJtLUI/giphy.gif" 
-          alt="Orbital Decay Feed" 
-          class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-        />
-        <!-- Scanning lines overlay -->
-        <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-        <!-- Retro CRT Vignette -->
-        <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-      </div>
+  <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-8 items-start justify-center">
+    <!-- GIF 1 Panel -->
+    <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[420px]">
+      <img 
+        src="https://media.giphy.com/media/l41YamEiIYltJtLUI/giphy.gif" 
+        alt="Orbital Decay Feed" 
+        class="w-full h-auto block opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+      />
+      <!-- Scanning lines overlay -->
+      <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+      <!-- Retro CRT Vignette -->
+      <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
+    </div>
 
-      <!-- GIF 2 Panel -->
-      <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black aspect-video flex items-center justify-center">
-        <img 
-          src="https://media.giphy.com/media/vKl91cZC6YKJD9w8ke/giphy.gif" 
-          alt="Interstellar Decay Mapping" 
-          class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-        />
-        <!-- Scanning lines overlay -->
-        <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-        <!-- Retro CRT Vignette -->
-        <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-      </div>
+    <!-- GIF 2 Panel -->
+    <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[420px]">
+      <img 
+        src="https://media.giphy.com/media/vKl91cZC6YKJD9w8ke/giphy.gif" 
+        alt="Interstellar Decay Mapping" 
+        class="w-full h-auto block opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+      />
+      <!-- Scanning lines overlay -->
+      <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+      <!-- Retro CRT Vignette -->
+      <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
     </div>
   </div>
 </div>
