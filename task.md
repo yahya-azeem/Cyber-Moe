@@ -42,4 +42,6 @@
 - [x] Place Black Hole Singularity Monitor as the absolute final section on the page
 - [x] Curl and save static visual system image locally to public/visual_system.jpg
 - [x] Embed visual_system.jpg CRT outline panel on the right column of Bio.svelte
+- [x] Reduce maximum widths (`max-w`) of visual_decay, signal_loop, and visual_system to compact, elegant sizes
+- [x] Remove thick horizontal section divider and pull the bottom grid up (`mt-6`) to reduce vertical spacing
 - [x] Verify everything compiles and builds successfully using Nix

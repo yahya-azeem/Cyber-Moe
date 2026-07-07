@@ -627,7 +627,7 @@
       </div>
       
       <!-- Telemetry Visualizer: System Monitor -->
-      <div class="retro-animate border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[380px] mx-auto">
+      <div class="retro-animate border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[300px] mx-auto">
         <img 
           src={`${baseUrl}visual_system.jpg`} 
           alt="System Visual Feed" 
@@ -645,7 +645,7 @@
   </div>
 
   <!-- Bottom Grid: Feed & LinkedIn -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-16 pt-12 border-t-2 border-[#3d3428]">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-6">
     
     <!-- Left Area: Live Activity Feed (Span 7) -->
     <div class="lg:col-span-7 space-y-4">
@@ -674,7 +674,7 @@
         {/if}
 
         <!-- Embedded local visual_decay GIF -->
-        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full mt-4">
+        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full max-w-[280px] mx-auto mt-4">
           <img 
             src={`${baseUrl}visual_decay.gif`} 
             alt="Orbital Decay Feed" 
@@ -696,7 +696,7 @@
 
       <div class="bg-[#0f1115] border-2 border-[#3d3428] p-6 text-center space-y-5 bebop-shadow font-mono">
         <!-- Embedded local signal_loop GIF -->
-        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full">
+        <div class="border border-[#3d3428] relative group overflow-hidden bg-black w-full max-w-[260px] mx-auto">
           <img 
             src={`${baseUrl}signal_loop.gif`} 
             alt="Interstellar Decay Mapping" 
