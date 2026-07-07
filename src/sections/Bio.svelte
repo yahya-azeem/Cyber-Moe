@@ -625,6 +625,18 @@
           </div>
         </div>
       </div>
+      
+      <!-- Telemetry Visualizer: Orbital Decay Feed -->
+      <div class="retro-animate border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[380px] mx-auto">
+        <img 
+          src={`${baseUrl}visual_decay.gif`} 
+          alt="Orbital Decay Feed" 
+          class="w-full h-auto block"
+          onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/visual_decay.gif'; }}
+        />
+        <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+        <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
+      </div>
 
     </div>
 
@@ -687,42 +699,30 @@
   </div>
 </div>
 
+<!-- CRT Panel for Visual Feeds -->
+<div class="relative w-full border-t-2 border-[#3d3428] bg-[#050608] py-16 px-6 select-none">
+  <div class="max-w-[1200px] mx-auto flex justify-center">
+    <!-- GIF 2 Panel -->
+    <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[500px]">
+      <img 
+        src={`${baseUrl}signal_loop.gif`} 
+        alt="Interstellar Decay Mapping" 
+        class="w-full h-auto block"
+        onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/signal_loop.gif'; }}
+      />
+      <!-- Scanning lines overlay -->
+      <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+      <!-- Retro CRT Vignette -->
+      <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Black Hole Accretion Disk Shader Section (Singularity Monitor) -->
-<div class="relative w-full h-[70vh] border-t-2 border-[#3d3428] bg-black overflow-hidden mt-16 select-none">
+<div class="relative w-full h-[70vh] border-t-2 border-[#3d3428] bg-black overflow-hidden select-none">
   <div class="absolute top-6 left-6 z-10 font-dots text-[#e0a92e] text-sm uppercase tracking-widest flex items-center gap-3 bg-black/60 p-3 border border-[#3d3428]">
     <div class="w-3 h-3 bg-[#e0a92e] animate-ping rounded-full"></div>
     SINGULARITY DISPATCH MONITOR // SES-02
   </div>
   <canvas bind:this={bhCanvas} class="w-full h-full block cursor-crosshair"></canvas>
-</div>
-
-<!-- CRT Panel for Visual Feeds -->
-<div class="relative w-full border-t-2 border-[#3d3428] bg-[#050608] py-16 px-6 select-none">
-  <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-8 items-start justify-center">
-    <!-- GIF 1 Panel -->
-    <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[420px]">
-      <img 
-        src="https://media.giphy.com/media/l41YamEiIYltJtLUI/giphy.gif" 
-        alt="Orbital Decay Feed" 
-        class="w-full h-auto block"
-      />
-      <!-- Scanning lines overlay -->
-      <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-      <!-- Retro CRT Vignette -->
-      <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-    </div>
-
-    <!-- GIF 2 Panel -->
-    <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[420px]">
-      <img 
-        src="https://media.giphy.com/media/vKl91cZC6YKJD9w8ke/giphy.gif" 
-        alt="Interstellar Decay Mapping" 
-        class="w-full h-auto block"
-      />
-      <!-- Scanning lines overlay -->
-      <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-      <!-- Retro CRT Vignette -->
-      <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-    </div>
-  </div>
 </div>

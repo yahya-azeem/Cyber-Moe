@@ -36,4 +36,8 @@
 - [x] Scale Giphy outline borders to match the exact size of the GIFs directly
 - [x] Remove aspect locks and object cropping to support proportional heights on vertical GIFs
 - [x] Remove hover opacity fade-in/fade-out transitions to show Giphy GIFs at full brightness
+- [x] Remove thick vertical accent line and padding on left of project cards
+- [x] Curl and save Giphy GIFs locally to public/ directory to prevent broken links
+- [x] Scatter visual GIF panels under Operator Directory and above Black Hole section
+- [x] Place Black Hole Singularity Monitor as the absolute final section on the page
 - [x] Verify everything compiles and builds successfully using Nix
