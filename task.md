@@ -40,4 +40,6 @@
 - [x] Curl and save Giphy GIFs locally to public/ directory to prevent broken links
 - [x] Embed visual_decay.gif inside Live Signal Feed card, signal_loop.gif inside Social Feed card
 - [x] Place Black Hole Singularity Monitor as the absolute final section on the page
+- [x] Curl and save static visual system image locally to public/visual_system.jpg
+- [x] Embed visual_system.jpg CRT outline panel on the right column of Bio.svelte
 - [x] Verify everything compiles and builds successfully using Nix
