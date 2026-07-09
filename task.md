@@ -51,4 +51,5 @@
 - [x] Set responsive heights (`h-[45vh] sm:h-[70vh]`) for the Black Hole Singularity monitor canvas
 - [x] Remove dead Capabilities dispatch button from the Bio header block
 - [x] Swap positions of signal_loop.gif (above Social Feed) and visual_system.jpg (below Social Feed)
+- [x] Remove visual_system.jpg card panel from the right column
 - [x] Verify everything compiles and builds successfully using Nix

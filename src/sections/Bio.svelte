@@ -691,18 +691,6 @@
             <ExternalLink size={12} class="inline ml-1" />
           </a>
         </div>
-
-        <!-- Telemetry Visualizer: System Monitor -->
-        <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[300px] mx-auto">
-          <img 
-            src={`${baseUrl}visual_system.jpg`} 
-            alt="System Visual Feed" 
-            class="w-full h-auto block"
-            onerror={(e) => { (e.currentTarget as HTMLImageElement).src = '/visual_system.jpg'; }}
-          />
-          <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
-          <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
-        </div>
       </div>
 
     </div>
