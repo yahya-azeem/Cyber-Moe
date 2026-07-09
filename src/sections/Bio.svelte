@@ -699,7 +699,7 @@
 </div>
 <!-- Black Hole Accretion Disk Shader (CRT Card) -->
 <div class="w-full flex justify-center py-6 bg-black">
-  <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[500px] mx-6 aspect-square select-none">
+  <div class="border-2 border-[#e0a92e] relative group bebop-shadow overflow-hidden bg-black w-full max-w-[500px] mx-6 aspect-square select-none">
     <canvas bind:this={bhCanvas} class="w-full h-full block cursor-crosshair"></canvas>
     <!-- Scanning lines overlay -->
     <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
