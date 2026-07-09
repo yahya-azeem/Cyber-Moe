@@ -697,12 +697,13 @@
 
   </div>
 </div>
-
-<!-- Black Hole Accretion Disk Shader Section (Singularity Monitor) -->
-<div class="relative w-full h-[45vh] sm:h-[70vh] border-t-2 border-[#3d3428] bg-black overflow-hidden select-none">
-  <div class="absolute top-6 left-6 z-10 font-dots text-[#e0a92e] text-sm uppercase tracking-widest flex items-center gap-3 bg-black/60 p-3 border border-[#3d3428]">
-    <div class="w-3 h-3 bg-[#e0a92e] animate-ping rounded-full"></div>
-    SINGULARITY DISPATCH MONITOR // SES-02
+<!-- Black Hole Accretion Disk Shader (CRT Card) -->
+<div class="w-full flex justify-center py-6 bg-black">
+  <div class="border-2 border-[#e0a92e] relative group bebop-shadow transition-all duration-300 hover:border-[#a8201a] overflow-hidden bg-black w-full max-w-[500px] mx-6 aspect-square select-none">
+    <canvas bind:this={bhCanvas} class="w-full h-full block cursor-crosshair"></canvas>
+    <!-- Scanning lines overlay -->
+    <div class="absolute inset-0 opacity-10 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]"></div>
+    <!-- Retro CRT Vignette -->
+    <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_40px_rgba(0,0,0,0.8)]"></div>
   </div>
-  <canvas bind:this={bhCanvas} class="w-full h-full block cursor-crosshair"></canvas>
 </div>

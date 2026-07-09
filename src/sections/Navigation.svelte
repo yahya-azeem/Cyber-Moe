@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Download } from 'lucide-svelte';
   const baseUrl = import.meta.env.BASE_URL || '/';
 </script>
 
@@ -16,6 +17,16 @@
         // PORTFOLIO TERMINAL
       </span>
     </div>
+
+    <!-- Resume Download -->
+    <a 
+      href={`${baseUrl}resume.pdf`}
+      download="Muhammad_Yahya_Azeem_Resume.pdf"
+      class="flex items-center gap-2 px-4 py-2 border border-[#e0a92e] text-[#e0a92e] hover:bg-[#e0a92e] hover:text-black transition-all duration-200 font-dots text-xs uppercase tracking-wider"
+    >
+      <Download size={14} />
+      <span class="hidden sm:inline">Resume</span>
+    </a>
   </div>
 </nav>
 
